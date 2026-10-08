@@ -3,6 +3,9 @@ import { LEVELS, PHASE_NAMES, TOTAL } from '@/levels';
 import { exportProgress, importProgress, isUnlocked, type Progress } from '@/lib/progress';
 import { Lock, Check, Download, Upload, RotateCcw, Play } from 'lucide-react';
 
+// Recherche insensible à la casse et aux accents
+const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
 const PHASE_COLORS: Record<number, { bg: string; chip: string; bar: string }> = {
   1: { bg: 'from-emerald-400 to-teal-500', chip: 'bg-emerald-100 text-emerald-800', bar: 'bg-emerald-500' },
   2: { bg: 'from-indigo-400 to-violet-500', chip: 'bg-indigo-100 text-indigo-800', bar: 'bg-indigo-500' },
@@ -23,9 +26,12 @@ export function Home({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [query, setQuery] = useState('');
   const pct = Math.round((progress.done.length / TOTAL) * 100);
   // Premier niveau non réussi : il est forcément débloqué (déblocage linéaire)
   const nextLevel = LEVELS.find((l) => !progress.done.includes(l.id));
+  const q = norm(query.trim());
+  const results = q.length >= 2 ? LEVELS.filter((l) => norm(`${l.title} ${l.topic}`).includes(q)).slice(0, 30) : [];
 
   return (
     <div className="mx-auto max-w-4xl px-4 pb-16">
@@ -80,6 +86,42 @@ export function Home({
         </div>
         <p className="mt-4 text-xs text-indigo-200">Progression enregistrée dans ce navigateur. Pensez à exporter pour changer d'appareil.</p>
       </header>
+
+      {/* Recherche */}
+      <div className="mt-6">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Rechercher un niveau"
+          placeholder="Rechercher un niveau (ex. boucle, liste, récursivité…)"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        />
+        {q.length >= 2 && (
+          <ul className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-sm">
+            {results.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-slate-500">Aucun niveau trouvé.</li>
+            ) : (
+              results.map((l) => {
+                const unlocked = isUnlocked(progress.done, l.id);
+                return (
+                  <li key={l.id}>
+                    <button
+                      disabled={!unlocked}
+                      onClick={() => onOpen(l.id)}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm min-h-[44px] ${unlocked ? 'hover:bg-slate-50' : 'text-slate-300 cursor-not-allowed'}`}
+                    >
+                      <span className="w-10 shrink-0 font-bold">{l.id}</span>
+                      <span className="min-w-0 flex-1 truncate">{l.title}</span>
+                      {progress.done.includes(l.id) ? <Check size={16} className="text-emerald-600" /> : !unlocked && <Lock size={14} />}
+                    </button>
+                  </li>
+                );
+              })
+            )}
+          </ul>
+        )}
+      </div>
 
       {/* Phases */}
       {[1, 2, 3, 4].map((ph) => {

@@ -100,6 +100,9 @@ export function LevelPage({
           <h1 className="truncate text-sm text-slate-500">{level.title}</h1>
         </div>
         {solved && <span className="flex items-center gap-1 text-emerald-600 text-sm font-semibold"><CheckCircle2 size={18} /> Réussi</span>}
+        {level.id > 1 && (
+          <button onClick={() => onOpen(level.id - 1)} aria-label="Niveau précédent" className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 min-h-[44px]">‹ {level.id - 1}</button>
+        )}
       </div>
 
       {/* Théorie */}

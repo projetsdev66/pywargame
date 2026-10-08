@@ -42,7 +42,7 @@ export default function App() {
   const level = currentId !== null ? getLevel(currentId) : undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-indigo-50/40 text-slate-800">
+    <div>
       {level ? (
         <LevelPage
           key={level.id}

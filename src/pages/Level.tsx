@@ -1,19 +1,13 @@
 import { useMemo, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
-import { ArrowLeft, ArrowRight, Play, CheckCircle2, Lightbulb, RotateCcw, BookOpen, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown, Lightbulb, Play, RotateCcw } from 'lucide-react';
 import type { Level } from '@/types/level';
-import { needsNumpy, getLevel } from '@/levels';
+import { getLevel, LEVELS, needsNumpy } from '@/levels';
+import { findSessionForLevel } from '@/lib/catalog';
 import { runLevel, type TestOutcome } from '@/lib/pyodide';
 import { analyseCode, type Progress } from '@/lib/progress';
 import { Markdown } from '@/components/Markdown';
-
-const PHASE_BADGE: Record<number, string> = {
-  1: 'bg-emerald-100 text-emerald-800',
-  2: 'bg-indigo-100 text-indigo-800',
-  3: 'bg-amber-100 text-amber-800',
-  4: 'bg-rose-100 text-rose-800',
-};
 
 export function LevelPage({
   level,
@@ -45,10 +39,18 @@ export function LevelPage({
 
   const allTests = useMemo(
     () => [
-      ...level.visibleTests.map((t) => ({ test: t, visible: true })),
-      ...level.hiddenTests.map((t) => ({ test: t, visible: false })),
+      ...level.visibleTests.map((test) => ({ test, visible: true })),
+      ...level.hiddenTests.map((test) => ({ test, visible: false })),
     ],
-    [level]
+    [level],
+  );
+  const familyLevels = useMemo(
+    () => LEVELS.filter((item) => item.phase === level.phase && item.topic === level.topic),
+    [level.phase, level.topic],
+  );
+  const session = useMemo(
+    () => findSessionForLevel(familyLevels, level.id),
+    [familyLevels, level.id],
   );
 
   const execute = async (validate: boolean) => {
@@ -59,17 +61,17 @@ export function LevelPage({
     onSaveCode(level.id, code);
     try {
       const tests = validate ? allTests : [];
-      const { outcomes: oc, run } = await runLevel(code, tests, needsNumpy(level));
+      const { outcomes: results, run } = await runLevel(code, tests, needsNumpy(level));
       setStdout(run.stdout || '');
       if (run.timedOut) {
-        setPyError(`⏱️ Temps dépassé : votre code a mis plus de ${needsNumpy(level) ? 90 : 12} secondes. Vérifiez les boucles (risque de boucle infinie).`);
+        setPyError(`Temps dépassé : votre code a mis plus de ${needsNumpy(level) ? 90 : 12} secondes. Vérifiez les boucles (risque de boucle infinie).`);
       } else if (run.error) {
         setPyError(run.error);
       }
       if (validate) {
-        setOutcomes(oc);
-        const allOk = !run.timedOut && !run.error && oc.every((o) => o.passed);
-        if (allOk) {
+        setOutcomes(results);
+        const allPassed = !run.timedOut && !run.error && results.every((result) => result.passed);
+        if (allPassed) {
           setSolved(true);
           onSolved(level.id);
           setTips(analyseCode(code, level.tips));
@@ -81,180 +83,230 @@ export function LevelPage({
     }
   };
 
-  const passed = outcomes?.filter((o) => o.passed).length ?? 0;
+  const visibleOutcomes = outcomes?.filter((outcome) => outcome.visible) ?? [];
+  const hiddenOutcomes = outcomes?.filter((outcome) => !outcome.visible) ?? [];
+  const hiddenPassed = hiddenOutcomes.filter((outcome) => outcome.passed).length;
+  const passed = outcomes?.filter((outcome) => outcome.passed).length ?? 0;
   const next = getLevel(level.id + 1);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-20">
-      {/* Barre supérieure */}
-      <div className="sticky top-0 z-10 -mx-4 bg-white/90 backdrop-blur border-b border-slate-200 px-4 py-3 flex items-center gap-3">
-        <button onClick={onBack} className="flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 min-h-[44px]">
-          <ArrowLeft size={16} /> Niveaux
+    <div className="level-shell">
+      <nav className="level-topbar" aria-label="Navigation du défi">
+        <button className="back-link" type="button" onClick={onBack}>
+          <ArrowLeft size={16} aria-hidden="true" /> Retour au parcours
         </button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-slate-900">Niveau {level.id}</span>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${PHASE_BADGE[level.phase]}`}>{level.phaseName}</span>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">{level.topic}</span>
-          </div>
-          <h1 className="truncate text-sm text-slate-500">{level.title}</h1>
+        <div className="topbar-context">
+          <span>Phase {level.phase}</span>
+          <span aria-hidden="true">/</span>
+          <span>{level.topic}</span>
         </div>
-        {solved && <span className="flex items-center gap-1 text-emerald-600 text-sm font-semibold"><CheckCircle2 size={18} /> Réussi</span>}
-        {level.id > 1 && (
-          <button onClick={() => onOpen(level.id - 1)} aria-label="Niveau précédent" className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 min-h-[44px]">‹ {level.id - 1}</button>
-        )}
-      </div>
-
-      {/* Théorie */}
-      <section className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50/60 overflow-hidden">
-        <button onClick={() => setShowTheory(!showTheory)} className="flex w-full items-center justify-between px-5 py-3 text-left font-semibold text-indigo-900 min-h-[44px]">
-          <span className="flex items-center gap-2"><BookOpen size={18} /> Théorie à lire</span>
-          <ChevronDown size={18} className={`transition-transform ${showTheory ? 'rotate-180' : ''}`} />
-        </button>
-        {showTheory && <div className="px-5 pb-5"><Markdown text={level.theory} /></div>}
-      </section>
-
-      {/* Énoncé */}
-      <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="font-bold text-slate-900 mb-2">Énoncé</h2>
-        <Markdown text={level.statement} />
-      </section>
-
-      {/* Éditeur */}
-      <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-          <h2 className="font-bold text-slate-900">Votre code</h2>
-          <button
-            onClick={() => { setCode(level.starterCode); onSaveCode(level.id, level.starterCode); }}
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 min-h-[36px]"
-          >
-            <RotateCcw size={14} /> Code de départ
-          </button>
-        </div>
-        <div
-          className="overflow-hidden rounded-xl ring-1 ring-slate-200"
-          // Ctrl/Cmd + Entrée = Valider (capturé avant CodeMirror pour ne pas insérer de ligne)
-          onKeyDownCapture={(e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!running) void execute(true);
-            }
-          }}
-        >
-          <CodeMirror
-            value={code}
-            height="260px"
-            extensions={[python()]}
-            onChange={(v) => { setCode(v); onSaveCode(level.id, v); }}
-            theme="light"
-            basicSetup={{ lineNumbers: true, autocompletion: true, indentOnInput: true }}
-          />
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            onClick={() => execute(false)}
-            disabled={running}
-            className="flex items-center gap-2 rounded-xl bg-slate-800 px-5 py-2.5 font-semibold text-white hover:bg-slate-700 disabled:opacity-50 transition min-h-[44px]"
-          >
-            <Play size={16} /> Exécuter
-          </button>
-          <button
-            onClick={() => execute(true)}
-            disabled={running}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-2.5 font-semibold text-white shadow hover:opacity-90 disabled:opacity-50 transition min-h-[44px]"
-          >
-            <CheckCircle2 size={16} /> Valider ({level.visibleTests.length} tests visibles + {level.hiddenTests.length} cachés)
-          </button>
-          <button
-            onClick={() => onUseHint(level.id, Math.min(hintsShown + 1, level.hints.length))}
-            disabled={hintsShown >= level.hints.length}
-            className="flex items-center gap-2 rounded-xl bg-amber-100 px-5 py-2.5 font-semibold text-amber-800 hover:bg-amber-200 disabled:opacity-40 transition min-h-[44px]"
-          >
-            <Lightbulb size={16} /> Indice ({hintsShown}/{level.hints.length})
-          </button>
-        </div>
-        {running && <p className="mt-3 text-sm text-slate-500 animate-pulse">Exécution en cours… (première fois : chargement de Python, ~5 s)</p>}
-      </section>
-
-      {/* Indices révélés */}
-      {hintsShown > 0 && (
-        <section className="mt-4 space-y-2">
-          {level.hints.slice(0, hintsShown).map((h, i) => (
-            <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <span className="font-semibold">Indice {i + 1} :</span> <Markdown text={h} />
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* Sortie */}
-      {stdout !== null && stdout !== '' && (
-        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="font-bold text-slate-900 mb-2">Sortie de votre programme</h2>
-          <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-[13px] text-slate-100">{stdout}</pre>
-        </section>
-      )}
-
-      {/* Erreur Python */}
-      {pyError && (
-        <section className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
-          <h2 className="font-bold text-red-800 mb-2">Erreur Python</h2>
-          <pre className="overflow-x-auto font-mono text-[13px] whitespace-pre-wrap text-red-700">{pyError}</pre>
-        </section>
-      )}
-
-      {/* Résultats des tests */}
-      {outcomes && (
-        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-bold text-slate-900">
-            Tests : {passed}/{outcomes.length} réussis {passed === outcomes.length ? '🎉' : ''}
-          </h2>
-          <ul className="mt-3 space-y-2">
-            {outcomes.map((o, i) => (
-              <li key={i} className={`rounded-xl px-4 py-3 text-sm ${o.passed ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'}`}>
-                <div className="font-semibold">
-                  {o.passed ? '✔' : '✘'} Test {i + 1} {o.visible ? '' : '(caché)'}
-                </div>
-                {!o.passed && o.detail && <pre className="mt-1 whitespace-pre-wrap font-mono text-xs">{o.detail}</pre>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Succès : conseils + correction */}
-      {solved && (
-        <section className="mt-4 space-y-4">
-          <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 p-5 text-white shadow">
-            <h2 className="text-lg font-bold">Niveau réussi ! 🎉</h2>
-            <p className="text-emerald-50 text-sm mt-1">Le niveau suivant est débloqué. Comparez votre code avec la correction ci-dessous.</p>
-            {next && (
-              <button onClick={() => onOpen(next.id)} className="mt-3 flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 font-semibold text-emerald-700 hover:bg-emerald-50 transition min-h-[44px]">
-                Niveau {next.id} <ArrowRight size={16} />
-              </button>
-            )}
-          </div>
-
-          {tips.length > 0 && (
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-5">
-              <h2 className="font-bold text-violet-900 mb-2">💡 Conseils sur votre code</h2>
-              <ul className="space-y-2 text-sm text-violet-800">
-                {tips.map((t, i) => <li key={i} className="flex gap-2"><span>→</span><span>{t}</span></li>)}
-              </ul>
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <button onClick={() => setShowSolution(!showSolution)} className="font-bold text-slate-900 flex items-center gap-2 min-h-[44px]">
-              <ChevronDown size={18} className={`transition-transform ${showSolution ? 'rotate-180' : ''}`} /> Correction commentée
+        <div className="topbar-controls">
+          {solved && <span className="solved-marker"><CheckCircle2 size={16} aria-hidden="true" /> Réussi</span>}
+          {level.id > 1 && (
+            <button className="button-secondary compact-button" type="button" onClick={() => onOpen(level.id - 1)} aria-label={`Ouvrir le niveau ${level.id - 1}`}>
+              <ArrowLeft size={14} aria-hidden="true" /> {level.id - 1}
             </button>
-            {showSolution && (
-              <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-[13px] leading-relaxed text-emerald-200">{level.solution}</pre>
+          )}
+        </div>
+      </nav>
+
+      <main className="level-main">
+        <header className="level-heading">
+          <nav className="lesson-breadcrumb" aria-label="Fil d’Ariane">
+            <span>{level.phaseName}</span>
+            <span aria-hidden="true">/</span>
+            <span>{level.topic}</span>
+            <span aria-hidden="true">/</span>
+            <span>Séance {session?.number ?? 1}</span>
+            <span aria-hidden="true">/</span>
+            <span>Défi {level.id}</span>
+          </nav>
+          <div className="level-title-row">
+            <div>
+              <p className="level-overline">PYTHON · NIVEAU {String(level.id).padStart(3, '0')} / 520</p>
+              <h1>{level.title}</h1>
+              <p className="level-subtitle">{level.phaseName} <span aria-hidden="true">·</span> {level.topic}</p>
+            </div>
+            <span className={`level-status ${solved ? 'is-solved' : ''}`}>
+              {solved ? <><CheckCircle2 size={16} aria-hidden="true" /> Réussi</> : `Séance ${session?.number ?? 1}`}
+            </span>
+          </div>
+        </header>
+
+        <div className="level-workspace">
+          <div className="lesson-column">
+            <section className="theory-block" aria-labelledby="theory-title">
+              <button
+                className="theory-toggle"
+                type="button"
+                aria-expanded={showTheory}
+                aria-controls="theory-content"
+                onClick={() => setShowTheory((visible) => !visible)}
+              >
+                <span className="section-label"><BookOpen size={16} aria-hidden="true" /> Repère de cours</span>
+                <span className="theory-toggle-action">{showTheory ? 'Réduire' : 'Afficher'} <ChevronDown className={showTheory ? 'chevron-open' : ''} size={16} aria-hidden="true" /></span>
+              </button>
+              {showTheory && <div className="theory-content" id="theory-content"><Markdown text={level.theory} /></div>}
+            </section>
+
+            <section className="statement-block" aria-labelledby="statement-title">
+              <p className="section-label">À résoudre</p>
+              <h2 id="statement-title">Énoncé</h2>
+              <Markdown text={level.statement} />
+            </section>
+
+            {hintsShown > 0 && (
+              <section className="hints-block" aria-label="Indices révélés">
+                <p className="section-label"><Lightbulb size={15} aria-hidden="true" /> Indices consultés</p>
+                {level.hints.slice(0, hintsShown).map((hint, index) => (
+                  <div className="hint-entry" key={index}>
+                    <span className="hint-number">{String(index + 1).padStart(2, '0')}</span>
+                    <div><strong>Indice {index + 1}</strong><Markdown text={hint} /></div>
+                  </div>
+                ))}
+              </section>
             )}
           </div>
-        </section>
-      )}
+
+          <section className="code-lab" aria-labelledby="code-title">
+            <div className="lab-heading">
+              <div>
+                <p className="section-label">Atelier Python</p>
+                <h2 id="code-title">Votre code</h2>
+              </div>
+              <button
+                className="button-quiet reset-code-button"
+                type="button"
+                onClick={() => { setCode(level.starterCode); onSaveCode(level.id, level.starterCode); }}
+              >
+                <RotateCcw size={14} aria-hidden="true" /> Code de départ
+              </button>
+            </div>
+            <div
+              className="code-editor"
+              onKeyDownCapture={(event) => {
+                if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (!running) void execute(true);
+                }
+              }}
+            >
+              <CodeMirror
+                value={code}
+                height="300px"
+                extensions={[python()]}
+                onChange={(value) => { setCode(value); onSaveCode(level.id, value); }}
+                theme="light"
+                aria-label="Votre code Python"
+                basicSetup={{ lineNumbers: true, autocompletion: true, indentOnInput: true }}
+              />
+            </div>
+            <p className="editor-shortcut">Raccourci : Ctrl/⌘ + Entrée pour valider.</p>
+            <div className="lab-actions">
+              <button className="button-secondary" type="button" onClick={() => void execute(false)} disabled={running}>
+                <Play size={15} aria-hidden="true" /> Exécuter
+              </button>
+              <button className="button-primary" type="button" onClick={() => void execute(true)} disabled={running}>
+                <Check size={16} aria-hidden="true" /> Valider
+              </button>
+              <button
+                className="button-hint"
+                type="button"
+                onClick={() => onUseHint(level.id, Math.min(hintsShown + 1, level.hints.length))}
+                disabled={hintsShown >= level.hints.length}
+              >
+                <Lightbulb size={15} aria-hidden="true" /> Indice <span>{hintsShown}/{level.hints.length}</span>
+              </button>
+            </div>
+            <p className="test-count-note">Validation : {level.visibleTests.length} tests visibles, {level.hiddenTests.length} tests supplémentaires.</p>
+            {running && <p className="execution-status" role="status" aria-live="polite">Exécution en cours… Le premier chargement de Python peut prendre quelques secondes.</p>}
+
+            {stdout !== null && stdout !== '' && (
+              <section className="output-block" aria-labelledby="output-title" aria-live="polite">
+                <h3 id="output-title">Sortie du programme</h3>
+                <pre>{stdout}</pre>
+              </section>
+            )}
+
+            {pyError && (
+              <section className="error-block" role="alert" aria-labelledby="error-title">
+                <h3 id="error-title">Erreur Python</h3>
+                <pre>{pyError}</pre>
+              </section>
+            )}
+
+            {outcomes && (
+              <section className="test-results" aria-labelledby="results-title" aria-live="polite">
+                <div className="results-heading">
+                  <h3 id="results-title">Résultats</h3>
+                  <span>{passed} / {outcomes.length} réussis</span>
+                </div>
+                <ul>
+                  {visibleOutcomes.map((outcome, index) => (
+                    <li className={outcome.passed ? 'test-row passed' : 'test-row failed'} key={index}>
+                      <span className="test-state-icon" aria-hidden="true">{outcome.passed ? '✓' : '×'}</span>
+                      <div>
+                        <strong>Test visible {index + 1}</strong>
+                        {!outcome.passed && outcome.detail && <pre>{outcome.detail}</pre>}
+                      </div>
+                    </li>
+                  ))}
+                  {hiddenOutcomes.length > 0 && (
+                    <li className={`test-row ${hiddenPassed === hiddenOutcomes.length ? 'passed' : 'failed'}`} key="additional-tests">
+                      <span className="test-state-icon" aria-hidden="true">{hiddenPassed === hiddenOutcomes.length ? '✓' : '×'}</span>
+                      <div>
+                        <strong>Tests supplémentaires</strong>
+                        <p>{hiddenPassed} / {hiddenOutcomes.length} réussis.</p>
+                        {hiddenPassed < hiddenOutcomes.length && <p>Au moins un cas supplémentaire ne passe pas. Les détails de ces tests ne sont pas affichés ; vérifiez les cas limites.</p>}
+                      </div>
+                    </li>
+                  )}
+                </ul>
+              </section>
+            )}
+          </section>
+        </div>
+
+        {solved && (
+          <section className="success-panel" aria-labelledby="success-title" aria-live="polite">
+            <div className="success-heading">
+              <CheckCircle2 size={20} aria-hidden="true" />
+              <div>
+                <p className="section-label">Défi validé</p>
+                <h2 id="success-title">Niveau réussi.</h2>
+                <p>Le niveau suivant est maintenant accessible. Vous pouvez comparer votre solution avec la correction commentée.</p>
+              </div>
+              {next && (
+                <button className="button-primary" type="button" onClick={() => onOpen(next.id)}>
+                  Niveau {next.id} <ArrowRight size={16} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+
+            {tips.length > 0 && (
+              <div className="tips-panel">
+                <p className="section-label">À retenir sur votre code</p>
+                <ul>{tips.map((tip, index) => <li key={index}>{tip}</li>)}</ul>
+              </div>
+            )}
+
+            <div className="solution-panel">
+              <button
+                className="solution-toggle"
+                type="button"
+                aria-expanded={showSolution}
+                aria-controls="solution-content"
+                onClick={() => setShowSolution((visible) => !visible)}
+              >
+                <span>Correction commentée</span>
+                <ChevronDown className={showSolution ? 'chevron-open' : ''} size={17} aria-hidden="true" />
+              </button>
+              {showSolution && <pre className="solution-code" id="solution-content">{level.solution}</pre>}
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   );
 }

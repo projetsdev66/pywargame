@@ -96,7 +96,15 @@ export function enrichTheory(theory: string, phase: number, topic: string, key =
   };
   const advice = phaseAdvice[phase] ?? 'Décomposez le problème, testez un exemple simple et vérifiez les cas limites.';
   const guide = guideFor(key, phase, topic);
-  return `${theory}
+  const algorithmicExtension = phase === 2 || phase === 4 ? `
+
+### Réflexe algorithmique
+1. **Spécification :** notez les entrées, la sortie et les contraintes.
+2. **Invariant :** formulez ce qui est vrai après chaque tour de boucle ou appel récursif.
+3. **Terminaison :** identifiez la quantité entière qui diminue ou l’intervalle qui rétrécit.
+4. **Complexité :** comptez les parcours ; une boucle imbriquée est souvent en \`O(n²)\`, un parcours simple en \`O(n)\`.
+5. **Validation :** testez une taille minimale, un cas régulier et un cas limite.` : '';
+  return `${theory}${algorithmicExtension}
 
 ### Fiche de notion
 **Prérequis :** ${guide.prerequisites}

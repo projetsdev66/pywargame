@@ -88,6 +88,7 @@ export function LevelPage({
   const hiddenPassed = hiddenOutcomes.filter((outcome) => outcome.passed).length;
   const passed = outcomes?.filter((outcome) => outcome.passed).length ?? 0;
   const next = getLevel(level.id + 1);
+  const hintStages = ['Comprendre', 'Choisir la méthode', 'Écrire le pseudo-code', 'Coder'];
 
   return (
     <div className="level-shell">
@@ -166,7 +167,7 @@ export function LevelPage({
                 {level.hints.slice(0, hintsShown).map((hint, index) => (
                   <div className="hint-entry" key={index}>
                     <span className="hint-number">{String(index + 1).padStart(2, '0')}</span>
-                    <div><strong>Indice {index + 1}</strong><Markdown text={hint} /></div>
+                    <div><strong>{hintStages[index] ?? `Indice ${index + 1}`}</strong><Markdown text={hint} /></div>
                   </div>
                 ))}
               </section>
@@ -221,7 +222,7 @@ export function LevelPage({
                 onClick={() => onUseHint(level.id, Math.min(hintsShown + 1, level.hints.length))}
                 disabled={hintsShown >= level.hints.length}
               >
-                <Lightbulb size={15} aria-hidden="true" /> Indice <span>{hintsShown}/{level.hints.length}</span>
+                <Lightbulb size={15} aria-hidden="true" /> {hintsShown < level.hints.length ? `Indice ${hintStages[hintsShown] ?? hintsShown + 1}` : 'Tous les indices'} <span>{hintsShown}/{level.hints.length}</span>
               </button>
             </div>
             <p className="test-count-note">Validation : {level.visibleTests.length} tests visibles, {level.hiddenTests.length} tests supplémentaires.</p>

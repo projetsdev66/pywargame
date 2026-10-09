@@ -1311,6 +1311,13 @@ button:disabled {
   font-size: 11px;
 }
 
+.hint-entry strong::after {
+  content: ' · étape progressive';
+  color: var(--muted);
+  font: 9px var(--mono-font);
+  font-weight: 400;
+}
+
 .hint-entry .markdown-content {
   margin-top: 4px;
 }

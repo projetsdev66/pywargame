@@ -574,6 +574,7 @@ button:disabled {
 .phase-section[data-phase="2"] { --phase-tone: #52657a; }
 .phase-section[data-phase="3"] { --phase-tone: #8a6a32; }
 .phase-section[data-phase="4"] { --phase-tone: #a15b44; }
+.phase-section[data-phase="5"] { --phase-tone: #6b5a86; }
 
 .phase-toggle {
   width: 100%;

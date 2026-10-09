@@ -4,7 +4,7 @@ import { LEVELS, PHASE_NAMES } from '@/levels';
 import { isUnlocked, type Progress } from '@/lib/progress';
 import { groupIntoSessions } from '@/lib/catalog';
 
-const PHASES = [1, 2, 3, 4] as const;
+const PHASES = Object.keys(PHASE_NAMES).map(Number);
 
 function toggleItem<T>(items: T[], item: T): T[] {
   return items.includes(item) ? items.filter((current) => current !== item) : [...items, item];

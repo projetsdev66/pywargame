@@ -792,11 +792,37 @@ button:disabled {
 }
 
 .level-node-title {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
   overflow: hidden;
   color: var(--ink-soft);
   font-size: 11px;
+}
+
+.level-node-meta {
+  overflow: hidden;
+  color: var(--muted);
+  font: 9px var(--mono-font);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.level-learning-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.learning-pill {
+  padding: 4px 7px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--muted);
+  font: 9px var(--mono-font);
+  letter-spacing: .02em;
 }
 
 .level-node-state {

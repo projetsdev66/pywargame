@@ -134,7 +134,10 @@ export function LevelCatalog({ progress, activeLevelId, onOpen }: LevelCatalogPr
                                           onClick={() => onOpen(level.id)}
                                         >
                                           <span className="level-node-number">{level.id}</span>
-                                          <span className="level-node-title">{level.title}</span>
+                                          <span className="level-node-title">
+                                            {level.title}
+                                            <small className="level-node-meta">Difficulté {level.difficulty ?? 1}/5 · {level.estimatedMinutes ?? 8} min</small>
+                                          </span>
                                           <span className="level-node-state">
                                             {completed ? <Check size={14} aria-hidden="true" /> : !unlocked ? <Lock size={13} aria-hidden="true" /> : null}
                                             <span>{stateLabel}</span>

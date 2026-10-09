@@ -25,6 +25,10 @@ export interface Level {
   phaseName: string;
   topic: string;
   title: string;
+  difficulty?: 1 | 2 | 3 | 4 | 5;
+  estimatedMinutes?: number;
+  skills?: string[];
+  prerequisites?: string[];
   theory: string; // markdown simplifié (``` pour blocs de code)
   statement: string;
   starterCode: string; // zone à compléter : commentaires uniquement, pas de solution

@@ -126,6 +126,11 @@ export function LevelPage({
               <p className="level-overline">PYTHON · NIVEAU {String(level.id).padStart(3, '0')} / {TOTAL}</p>
               <h1>{level.title}</h1>
               <p className="level-subtitle">{level.phaseName} <span aria-hidden="true">·</span> {level.topic}</p>
+              <div className="level-learning-meta" aria-label="Informations pédagogiques">
+                <span className="learning-pill">Difficulté {level.difficulty ?? 1}/5</span>
+                <span className="learning-pill">{level.estimatedMinutes ?? 8} min</span>
+                {(level.skills ?? []).map((skill) => <span className="learning-pill" key={skill}>{skill}</span>)}
+              </div>
             </div>
             <span className={`level-status ${solved ? 'is-solved' : ''}`}>
               {solved ? <><CheckCircle2 size={16} aria-hidden="true" /> Réussi</> : `Séance ${session?.number ?? 1}`}

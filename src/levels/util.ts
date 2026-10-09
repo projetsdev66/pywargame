@@ -116,7 +116,28 @@ export function enrichTheory(theory: string, phase: number, topic: string, key =
 - Préférez une solution lisible avant de chercher à la raccourcir ; le nom des variables doit rendre l’algorithme compréhensible.
 
 ### Auto-vérification
-Avant de valider, essayez mentalement un cas simple, un cas limite et un cas qui ne suit pas le chemin principal. Si le résultat est faux, lisez d’abord la première erreur signalée et localisez la ligne concernée.`;
+  Avant de valider, essayez mentalement un cas simple, un cas limite et un cas qui ne suit pas le chemin principal. Si le résultat est faux, lisez d’abord la première erreur signalée et localisez la ligne concernée.`;
+}
+
+export function learningMetadata(key: string, phase: number, index: number, count: number, topic: string) {
+  const ranges: Record<number, [number, number]> = { 1: [1, 3], 2: [2, 4], 3: [2, 5], 4: [4, 5], 5: [3, 5] };
+  const [minimum, maximum] = ranges[phase] ?? [1, 5];
+  const ratio = count <= 1 ? 1 : index / (count - 1);
+  const difficulty = Math.min(5, Math.max(1, Math.round(minimum + ratio * (maximum - minimum)))) as 1 | 2 | 3 | 4 | 5;
+  const skillMap: Record<string, string[]> = {
+    variables: ['affectation', 'expressions'], operateurs: ['arithmétique', 'division euclidienne'], conversions: ['types', 'conversion'],
+    fstrings: ['chaînes', 'formatage'], 'listes-index': ['listes', 'indices'], 'listes-methodes': ['listes', 'méthodes'],
+    'boucles-for': ['boucles', 'range'], 'boucles-while': ['boucles', 'terminaison'], conditions: ['booléens', 'branchements'],
+    chaines: ['chaînes', 'parcours'], fonctions: ['fonctions', 'return'], 'dicts-tuples': ['dictionnaires', 'tuples'],
+    accumulateurs: ['parcours', 'invariant'], 'max-position': ['recherche', 'indices'], tris: ['tri', 'complexité'],
+    dichotomie: ['recherche', 'complexité logarithmique'], recursivite: ['récursivité', 'preuve'], 'piles-files': ['structures', 'LIFO/FIFO'],
+    comprehensions: ['compréhensions', 'filtres'], 'double-boucle': ['boucles imbriquées', 'complexité'],
+    'numpy-bases': ['NumPy', 'vectorisation'], 'numpy-masques': ['NumPy', 'masques'], suites: ['suites', 'récurrence'],
+    integration: ['intégration', 'approximation'], zeros: ['zéros', 'dichotomie'], euler: ['Euler', 'équations différentielles'], courbes: ['NumPy', 'visualisation'],
+  };
+  const skills = skillMap[key] ?? [topic];
+  const prerequisite = difficulty <= 1 ? 'Aucun prérequis' : difficulty === 2 ? 'Notions précédentes de la famille' : `Niveau ${difficulty - 1} de la famille`;
+  return { difficulty, estimatedMinutes: 5 + difficulty * 3, skills, prerequisites: [prerequisite] };
 }
 
 // Gabarit de code de départ : uniquement des commentaires + un « pass ».

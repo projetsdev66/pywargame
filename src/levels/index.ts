@@ -1,7 +1,7 @@
 // Assemblage de tous les niveaux : chaque famille génère ses variantes
 // avec un hasard déterministe (même niveau à chaque visite).
 import type { Level } from '@/types/level';
-import { enrichTheory, makeRng, type FamSpec } from './util';
+import { enrichTheory, learningMetadata, makeRng, type FamSpec } from './util';
 import { PHASE1 } from './phase1';
 import { PHASE2 } from './phase2';
 import { PHASE3, NUMPY_KEYS } from './phase3';
@@ -23,7 +23,8 @@ function buildPhase(fams: FamSpec[], phase: number, startId: number): Level[] {
     for (let i = 0; i < fam.count; i++) {
       const r = makeRng(id * 7919 + 13);
       const partial = fam.gen(r, i);
-      out.push({ ...partial, theory: enrichTheory(partial.theory, phase, partial.topic, fam.key), id, phase, phaseName: PHASE_NAMES[phase] });
+      const learning = learningMetadata(fam.key, phase, i, fam.count, partial.topic);
+      out.push({ ...partial, ...learning, theory: enrichTheory(partial.theory, phase, partial.topic, fam.key), id, phase, phaseName: PHASE_NAMES[phase] });
       id++;
     }
   }

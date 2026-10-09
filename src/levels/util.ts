@@ -41,7 +41,52 @@ export interface FamSpec {
 
 // Complément commun injecté dans chaque fiche : il harmonise les 540 cours
 // sans modifier les exercices générés ni révéler directement leur solution.
-export function enrichTheory(theory: string, phase: number, topic: string): string {
+interface TheoryGuide {
+  prerequisites: string;
+  keyIdea: string;
+  method: string;
+  pitfalls: string;
+}
+
+function guideFor(key: string, phase: number, topic: string): TheoryGuide {
+  const guides: Record<string, TheoryGuide> = {
+    variables: { prerequisites: 'Aucune : on manipule des valeurs et des noms.', keyIdea: 'Une affectation lie un nom à une valeur ; elle ne compare pas deux valeurs.', method: 'Écrire les affectations dans l’ordre, puis calculer l’expression en respectant les priorités.', pitfalls: 'Réutiliser un ancien nom ou confondre `=` avec `==`.' },
+    operateurs: { prerequisites: 'Variables et expressions arithmétiques.', keyIdea: '`//` donne le quotient entier, `%` le reste et `**` la puissance.', method: 'Identifier l’opération demandée et vérifier le résultat avec la division euclidienne.', pitfalls: 'Confondre `/` et `//`, surtout parce que `/` produit un flottant.' },
+    conversions: { prerequisites: 'Types `int`, `float`, `str` et `bool`.', keyIdea: 'Le type détermine les opérations disponibles ; une conversion crée une nouvelle valeur.', method: 'Repérer le type reçu, choisir le constructeur adapté, puis vérifier le type renvoyé.', pitfalls: 'Additionner du texte comme des nombres ou croire que `int` arrondit un flottant.' },
+    fstrings: { prerequisites: 'Chaînes, variables et fonctions.', keyIdea: 'Une f-string évalue les expressions entre accolades au moment de construire le texte.', method: 'Écrire d’abord le texte fixe, puis insérer chaque variable exactement à sa place.', pitfalls: 'Oublier le préfixe `f`, une accolade ou un espace demandé par l’énoncé.' },
+    'listes-index': { prerequisites: 'Listes et entiers.', keyIdea: 'Le premier indice est 0 et une tranche exclut sa borne droite.', method: 'Écrire les indices valides avant de coder ; tester le premier et le dernier élément.', pitfalls: 'Utiliser `len(L)` comme indice ou oublier que `L[a:b]` s’arrête avant `b`.' },
+    'listes-methodes': { prerequisites: 'Listes et boucles.', keyIdea: 'Certaines méthodes modifient la liste (`append`, `sort`) et renvoient `None`.', method: 'Décider si l’on veut modifier la liste ou construire une nouvelle liste.', pitfalls: 'Écrire `L = L.append(x)` ou utiliser `sort()` quand une copie est attendue.' },
+    'boucles-for': { prerequisites: 'Listes, `range` et conditions.', keyIdea: '`for` parcourt une collection ou une suite de valeurs, une fois par élément.', method: 'Décrire ce que représente la variable de boucle à chaque tour et initialiser l’accumulateur.', pitfalls: 'Mauvaise borne de `range`, modification dangereuse de la liste parcourue.' },
+    'boucles-while': { prerequisites: 'Conditions booléennes et affectations.', keyIdea: 'Une boucle `while` doit faire progresser une quantité vers une condition d’arrêt.', method: 'Écrire la condition, l’initialisation, puis la mise à jour qui garantit la terminaison.', pitfalls: 'Oublier la mise à jour et créer une boucle infinie.' },
+    conditions: { prerequisites: 'Comparaisons et booléens.', keyIdea: '`if`, `elif`, `else` choisissent un seul chemin parmi plusieurs.', method: 'Ordonner les cas du plus spécifique au plus général et couvrir le cas restant.', pitfalls: 'Conditions qui se recouvrent, égalité oubliée ou indentation incorrecte.' },
+    chaines: { prerequisites: 'Types, indices et boucles.', keyIdea: 'Une chaîne est une séquence immuable de caractères.', method: 'Utiliser les méthodes adaptées (`split`, `strip`, `count`, `replace`) avant une boucle manuelle.', pitfalls: 'Croire qu’une méthode modifie la chaîne ou confondre caractère et sous-chaîne.' },
+    fonctions: { prerequisites: 'Variables, blocs indentés et `return`.', keyIdea: 'Une fonction reçoit des paramètres et renvoie une valeur indépendante de l’affichage.', method: 'Définir les entrées, le résultat attendu, puis un chemin de retour pour chaque cas.', pitfalls: 'Oublier `return`, modifier une variable extérieure ou mélanger affichage et résultat.' },
+    'dicts-tuples': { prerequisites: 'Séquences, clés et valeurs.', keyIdea: 'Un dictionnaire associe des clés uniques à des valeurs ; un tuple est une séquence immuable.', method: 'Choisir une clé qui identifie naturellement l’information et traiter l’absence avec `get` si nécessaire.', pitfalls: 'Accéder à une clé absente ou utiliser une liste comme clé.' },
+    accumulateurs: { prerequisites: 'Boucles `for`, conditions et valeurs initiales.', keyIdea: 'Un accumulateur résume les éléments déjà parcourus.', method: 'Formuler l’invariant : après k tours, que contient exactement l’accumulateur ?', pitfalls: 'Mauvaise valeur initiale : 0 pour une somme, 1 pour un produit, liste vide pour une construction.' },
+    'max-position': { prerequisites: 'Indices, parcours et comparaisons.', keyIdea: 'On conserve le meilleur candidat et son indice, pas seulement la valeur.', method: 'Initialiser avec le premier élément puis comparer chaque élément restant.', pitfalls: 'Initialiser à 0, oublier les égalités ou supposer que la liste est non vide sans le préciser.' },
+    tris: { prerequisites: 'Boucles imbriquées, indices et échanges.', keyIdea: 'Un tri maintient une partie déjà ordonnée et réduit la partie restante.', method: 'Définir l’invariant de la boucle externe et compter les comparaisons.', pitfalls: 'Mauvaise borne interne, échange incomplet ou oubli du retour de la liste.' },
+    dichotomie: { prerequisites: 'Listes triées, indices et conditions.', keyIdea: 'La recherche dichotomique élimine la moitié des candidats à chaque étape.', method: 'Maintenir l’intervalle où la cible peut encore se trouver et prouver sa réduction.', pitfalls: 'Appliquer l’algorithme à une liste non triée ou boucler avec des bornes inchangées.' },
+    recursivite: { prerequisites: 'Fonctions, conditions et raisonnement par taille.', keyIdea: 'Toute récursion doit avoir un cas de base et un appel sur un problème strictement plus petit.', method: 'Écrire d’abord le cas de base, puis vérifier la décroissance de la taille.', pitfalls: 'Absence de cas de base, progression insuffisante ou double comptage.' },
+    'piles-files': { prerequisites: 'Listes et méthodes `append`/`pop`.', keyIdea: 'Une pile est LIFO ; une file est FIFO.', method: 'Choisir l’extrémité d’ajout et de retrait, puis simuler deux opérations à la main.', pitfalls: 'Inverser FIFO et LIFO ou retirer au mauvais indice.' },
+    comprehensions: { prerequisites: 'Boucles, conditions et listes.', keyIdea: 'Une compréhension condense une construction régulière sans cacher sa logique.', method: 'Écrire d’abord la boucle classique, puis la traduire en compréhension.', pitfalls: 'Rendre l’expression illisible ou placer le filtre au mauvais endroit.' },
+    'double-boucle': { prerequisites: 'Boucles simples et invariants.', keyIdea: 'Une boucle imbriquée traite souvent chaque paire ou chaque case d’une structure.', method: 'Compter séparément les tours externes et internes ; identifier les doublons éventuels.', pitfalls: 'Confondre indices de ligne et de colonne, ou compter deux fois une paire.' },
+    'numpy-bases': { prerequisites: 'Listes, indices et opérations numériques.', keyIdea: 'Un array NumPy porte une forme et applique les opérations élément par élément.', method: 'Contrôler `shape`, choisir le type, vectoriser, puis convertir en liste seulement à la sortie.', pitfalls: 'Confondre liste et array, oublier `.tolist()` ou utiliser une mauvaise dimension.' },
+    'numpy-masques': { prerequisites: 'Arrays, comparaisons et booléens.', keyIdea: 'Un masque booléen sélectionne les cases vraies sans boucle Python.', method: 'Construire le masque, l’appliquer, puis convertir le résultat ou agréger avec `sum`, `mean`.', pitfalls: 'Utiliser `and`/`or` au lieu de `&`/`|`, ou oublier les parenthèses autour des comparaisons.' },
+    suites: { prerequisites: 'Boucles, récurrence et accumulateurs.', keyIdea: 'Une suite définie par récurrence se calcule en conservant son terme courant.', method: 'Initialiser `u` à u₀ et appliquer exactement n mises à jour.', pitfalls: 'Faire n+1 itérations ou utiliser la nouvelle valeur au mauvais moment.' },
+    integration: { prerequisites: 'Fonctions, intervalles et sommes.', keyIdea: 'Une intégrale numérique approxime une aire par une somme pondérée.', method: 'Découper l’intervalle, calculer le pas h, puis contrôler l’erreur sur un cas connu.', pitfalls: 'Confondre nombre de points et nombre de rectangles, ou oublier le facteur h.' },
+    zeros: { prerequisites: 'Fonctions, intervalles et dichotomie.', keyIdea: 'La dichotomie conserve un changement de signe et divise l’intervalle par deux.', method: 'Vérifier f(a)f(b) ≤ 0, choisir le sous-intervalle pertinent et fixer une tolérance.', pitfalls: 'Utiliser une fonction sans changement de signe ou arrêter sur une largeur mal mesurée.' },
+    euler: { prerequisites: 'Suites, fonctions et dérivée.', keyIdea: 'Euler remplace localement la courbe par sa tangente : yₙ₊₁ = yₙ + h f(tₙ,yₙ).', method: 'Mettre à jour t et y dans le bon ordre et comparer avec un pas plus petit.', pitfalls: 'Confondre h et le nombre de pas, ou évaluer f au mauvais point.' },
+    courbes: { prerequisites: 'NumPy et tableaux de valeurs.', keyIdea: 'Une courbe numérique est un couple de tableaux de même longueur.', method: 'Construire un axe régulier, appliquer la fonction vectorisée et vérifier les formes.', pitfalls: 'Axes de longueurs différentes ou fonction non vectorisable.' },
+  };
+  return guides[key] ?? {
+    prerequisites: `Les notions précédentes de la phase ${phase} et les opérations de base de Python.`,
+    keyIdea: `Le thème « ${topic} » doit être transformé en une procédure précise et testable.`,
+    method: 'Reformuler les entrées, la sortie et les cas limites avant d’écrire le code.',
+    pitfalls: 'Confondre l’exemple de l’énoncé avec une règle générale ou oublier les cas limites.',
+  };
+}
+
+export function enrichTheory(theory: string, phase: number, topic: string, key = ''): string {
   const phaseAdvice: Record<number, string> = {
     1: 'Commencez par traduire chaque verbe de l’énoncé en une instruction Python, puis vérifiez les types des valeurs manipulées.',
     2: 'Écrivez l’invariant de la boucle en une phrase : que représente exactement l’accumulateur après chaque tour ?',
@@ -50,7 +95,17 @@ export function enrichTheory(theory: string, phase: number, topic: string): stri
     5: 'Repérez l’outil Python demandé, construisez un exemple minimal, puis vérifiez le comportement lorsque l’entrée est vide, invalide ou à la borne.',
   };
   const advice = phaseAdvice[phase] ?? 'Décomposez le problème, testez un exemple simple et vérifiez les cas limites.';
+  const guide = guideFor(key, phase, topic);
   return `${theory}
+
+### Fiche de notion
+**Prérequis :** ${guide.prerequisites}
+
+**Idée clé :** ${guide.keyIdea}
+
+**Méthode :** ${guide.method}
+
+**Piège classique :** ${guide.pitfalls}
 
 ### Méthode MPSI
 **Notion travaillée :** ${topic}. ${advice}

@@ -23,7 +23,7 @@ function buildPhase(fams: FamSpec[], phase: number, startId: number): Level[] {
     for (let i = 0; i < fam.count; i++) {
       const r = makeRng(id * 7919 + 13);
       const partial = fam.gen(r, i);
-      out.push({ ...partial, theory: enrichTheory(partial.theory, phase, partial.topic), id, phase, phaseName: PHASE_NAMES[phase] });
+      out.push({ ...partial, theory: enrichTheory(partial.theory, phase, partial.topic, fam.key), id, phase, phaseName: PHASE_NAMES[phase] });
       id++;
     }
   }

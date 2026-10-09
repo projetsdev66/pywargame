@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { ArrowRight, Check, Download, Lock, RotateCcw, Search, Upload } from 'lucide-react';
 import { LevelCatalog } from '@/components/LevelCatalog';
-import { LEVELS, TOTAL } from '@/levels';
+import { LEVELS, PHASE_NAMES, TOTAL } from '@/levels';
 import { findSessionForLevel } from '@/lib/catalog';
 import { exportProgress, importProgress, isUnlocked, type Progress } from '@/lib/progress';
 
@@ -49,7 +49,7 @@ export function Home({
           <p className="eyebrow"><span className="eyebrow-rule" /> Du premier calcul aux problèmes de MPSI</p>
           <h1 id="home-title">Lire. Essayer.<br /><em>Comprendre.</em></h1>
           <p className="intro-copy">
-            520 défis pour travailler Python progressivement, des fondamentaux au calcul scientifique.
+            {TOTAL} défis pour travailler Python progressivement, des fondamentaux aux compléments MPSI.
             Chaque niveau se lance directement dans le navigateur.
           </p>
         </section>
@@ -57,7 +57,7 @@ export function Home({
         <section className="resume-panel" aria-labelledby="resume-title">
           <div className="resume-topline">
             <span>Votre parcours</span>
-            <span>4 phases <span aria-hidden="true">·</span> {TOTAL} défis</span>
+            <span>{Object.keys(PHASE_NAMES).length} phases <span aria-hidden="true">·</span> {TOTAL} défis</span>
           </div>
           <div className="resume-main">
             <div className="resume-copy">
@@ -70,7 +70,7 @@ export function Home({
               ) : (
                 <>
                   <p className="resume-kicker">Parcours terminé</p>
-                  <h2 id="resume-title">Les 520 défis sont réussis.</h2>
+                  <h2 id="resume-title">Les {TOTAL} défis sont réussis.</h2>
                   <p className="resume-context">Vous pouvez rouvrir les niveaux déjà validés depuis le catalogue.</p>
                 </>
               )}
@@ -86,7 +86,7 @@ export function Home({
             <div
               className="progress-track"
               role="progressbar"
-              aria-label="Progression dans les 520 défis"
+              aria-label={`Progression dans les ${TOTAL} défis`}
               aria-valuemin={0}
               aria-valuemax={TOTAL}
               aria-valuenow={doneCount}

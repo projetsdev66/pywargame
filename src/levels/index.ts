@@ -6,12 +6,14 @@ import { PHASE1 } from './phase1';
 import { PHASE2 } from './phase2';
 import { PHASE3, NUMPY_KEYS } from './phase3';
 import { PHASE4 } from './phase4';
+import { PHASE5 } from './phase5';
 
 export const PHASE_NAMES: Record<number, string> = {
   1: 'Les bases de Python',
   2: 'Algorithmique',
   3: 'Calcul scientifique',
   4: 'Synthèse type DS MPSI',
+  5: 'Compléments Python pour la MPSI',
 };
 
 function buildPhase(fams: FamSpec[], phase: number, startId: number): Level[] {
@@ -33,8 +35,9 @@ const l1 = buildPhase(PHASE1, 1, id); id += l1.length;
 const l2 = buildPhase(PHASE2, 2, id); id += l2.length;
 const l3 = buildPhase(PHASE3, 3, id); id += l3.length;
 const l4 = buildPhase(PHASE4, 4, id); id += l4.length;
+const l5 = buildPhase(PHASE5, 5, id); id += l5.length;
 
-export const LEVELS: Level[] = [...l1, ...l2, ...l3, ...l4];
+export const LEVELS: Level[] = [...l1, ...l2, ...l3, ...l4, ...l5];
 
 export const NUMPY_LEVELS = new Set<number>(
   LEVELS.filter((l) => NUMPY_KEYS.has(keyOf(l))).map((l) => l.id)

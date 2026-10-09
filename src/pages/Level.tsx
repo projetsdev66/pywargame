@@ -3,7 +3,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
 import { ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown, Lightbulb, Play, RotateCcw } from 'lucide-react';
 import type { Level } from '@/types/level';
-import { getLevel, LEVELS, needsNumpy } from '@/levels';
+import { getLevel, LEVELS, needsNumpy, TOTAL } from '@/levels';
 import { findSessionForLevel } from '@/lib/catalog';
 import { runLevel, type TestOutcome } from '@/lib/pyodide';
 import { analyseCode, type Progress } from '@/lib/progress';
@@ -123,7 +123,7 @@ export function LevelPage({
           </nav>
           <div className="level-title-row">
             <div>
-              <p className="level-overline">PYTHON · NIVEAU {String(level.id).padStart(3, '0')} / 520</p>
+              <p className="level-overline">PYTHON · NIVEAU {String(level.id).padStart(3, '0')} / {TOTAL}</p>
               <h1>{level.title}</h1>
               <p className="level-subtitle">{level.phaseName} <span aria-hidden="true">·</span> {level.topic}</p>
             </div>

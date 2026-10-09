@@ -39,6 +39,31 @@ export interface FamSpec {
   gen: (r: RNG, i: number) => Omit<Level, 'id' | 'phase' | 'phaseName'>;
 }
 
+// Complément commun injecté dans chaque fiche : il harmonise les 540 cours
+// sans modifier les exercices générés ni révéler directement leur solution.
+export function enrichTheory(theory: string, phase: number, topic: string): string {
+  const phaseAdvice: Record<number, string> = {
+    1: 'Commencez par traduire chaque verbe de l’énoncé en une instruction Python, puis vérifiez les types des valeurs manipulées.',
+    2: 'Écrivez l’invariant de la boucle en une phrase : que représente exactement l’accumulateur après chaque tour ?',
+    3: 'Identifiez les dimensions, le type numérique et la tolérance attendue avant de calculer ; vérifiez ensuite un petit cas à la main.',
+    4: 'Découpez le problème en sous-fonctions ou étapes simples, puis testez séparément un cas nominal et un cas limite.',
+    5: 'Repérez l’outil Python demandé, construisez un exemple minimal, puis vérifiez le comportement lorsque l’entrée est vide, invalide ou à la borne.',
+  };
+  const advice = phaseAdvice[phase] ?? 'Décomposez le problème, testez un exemple simple et vérifiez les cas limites.';
+  return `${theory}
+
+### Méthode MPSI
+**Notion travaillée :** ${topic}. ${advice}
+
+### Points de vigilance
+- Distinguez toujours la valeur renvoyée de la valeur affichée avec \`print()\`.
+- Vérifiez les bornes : liste vide, premier ou dernier indice, valeur nulle et égalités.
+- Préférez une solution lisible avant de chercher à la raccourcir ; le nom des variables doit rendre l’algorithme compréhensible.
+
+### Auto-vérification
+Avant de valider, essayez mentalement un cas simple, un cas limite et un cas qui ne suit pas le chemin principal. Si le résultat est faux, lisez d’abord la première erreur signalée et localisez la ligne concernée.`;
+}
+
 // Gabarit de code de départ : uniquement des commentaires + un « pass ».
 // L'élève écrit son code lui-même, guidé par les commentaires.
 export function starterFn(signature: string, todo: string[]): string {

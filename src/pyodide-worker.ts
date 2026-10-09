@@ -103,5 +103,18 @@ function cleanError(msg: string): string {
   // Garder seulement les lignes utiles du traceback
   const lines = msg.split('\n').filter((l) => !l.includes('pyodide') && !l.includes('at '));
   const idx = lines.findIndex((l) => /Error|Exception/.test(l));
-  return idx >= 0 ? lines.slice(Math.max(0, idx - 3)).join('\n').trim() : lines.slice(-6).join('\n').trim();
+  const cleaned = idx >= 0 ? lines.slice(Math.max(0, idx - 3)).join('\n').trim() : lines.slice(-6).join('\n').trim();
+  const hint = errorHint(cleaned);
+  return hint ? `${cleaned}\n\nPiste : ${hint}` : cleaned;
+}
+
+function errorHint(message: string): string {
+  if (/SyntaxError|IndentationError/.test(message)) return 'vérifiez les deux-points, les parenthèses et l’indentation de chaque bloc.';
+  if (/NameError/.test(message)) return 'un nom est inconnu : vérifiez l’orthographe et définissez la variable avant de l’utiliser.';
+  if (/TypeError/.test(message)) return 'vérifiez que les opérations utilisent des valeurs compatibles, par exemple str() ou int() si nécessaire.';
+  if (/ZeroDivisionError/.test(message)) return 'un diviseur vaut zéro dans un cas testé : traitez ce cas avant la division.';
+  if (/IndexError/.test(message)) return 'un indice sort de la liste : contrôlez sa borne avec len() ou parcourez directement les éléments.';
+  if (/KeyError/.test(message)) return 'la clé demandée est absente : utilisez get() ou testez son existence avec in.';
+  if (/AttributeError/.test(message)) return 'la méthode ou l’attribut n’existe pas pour ce type : vérifiez le type de la valeur.';
+  return '';
 }

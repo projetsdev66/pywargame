@@ -270,7 +270,7 @@ print(f"{nom} a {age} ans.")        # Alice a 20 ans.
 print(f"Dans 10 ans : {age + 10}")  # Dans 10 ans : 30
 \`\`\`
 
-On peut aussi formater les nombres : \`f"{3.14159:.2f}"\` donne \`"3.14"\`.`;
+On peut aussi formater les nombres : \`f"{3.14159:.2f}"\` donne \`"3.14"\`. Avec \`print()\`, l’argument \`sep\` choisit le séparateur entre plusieurs valeurs et \`end\` remplace le retour à la ligne final : \`print("A", "B", sep="-")\` affiche \`A-B\` ; \`print("A", end=" ")\` conserve la même ligne.`;
 
 const PRENOMS = ['Alice', 'Bob', 'Chloé', 'David', 'Emma', 'Farid', 'Gina', 'Hugo'];
 const VILLES = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Nantes', 'Lille', 'Bordeaux'];
@@ -280,7 +280,7 @@ const F4: FamSpec = {
   topic: 'Affichage et f-strings',
   count: 20,
   gen: (r, i) => {
-    const mode = i % 2;
+    const mode = i % 4;
     if (mode === 0) {
       const nom = pick(r, PRENOMS), age = ri(r, 17, 45);
       const attendu = `Je m'appelle ${nom} et j'ai ${age} ans.`;
@@ -307,6 +307,30 @@ const F4: FamSpec = {
         tips: [
           { pattern: '\\+', advice: 'La concaténation avec + fonctionne, mais la f-string est plus lisible et évite les str() partout.', mode: 'avoid' },
         ],
+      };
+    }
+    if (mode === 2) {
+      const prix = ri(r, 120, 999) / 100;
+      const attendu = `Prix : ${prix.toFixed(2)} €`;
+      return {
+        topic: F4.topic, title: `Prix formaté ${i + 1}`, theory: THEORY_FSTR,
+        statement: `Complétez \`affiche_prix(prix)\` pour renvoyer le prix sous la forme \`${attendu}\`, avec exactement deux chiffres après la virgule.`,
+        starterCode: starterFn('def affiche_prix(prix):', ['Utilisez une f-string', 'Le format .2f impose deux chiffres après la virgule', 'Renvoyez le texte obtenu']),
+        hints: ['Le formatage se place après les deux-points dans les accolades.', 'La structure est f"Prix : {prix:.2f} €".', 'return f"Prix : {prix:.2f} €"'],
+        visibleTests: [{ kind: 'call', fn: 'affiche_prix', args: [prix], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'affiche_prix', args: [3], expect: ['Prix : 3.00 €'] }],
+        solution: 'def affiche_prix(prix):\n    return f"Prix : {prix:.2f} €"', tips: [],
+      };
+    }
+    if (mode === 3) {
+      const gauche = pick(r, ['A', 'Python', 'début']), droite = pick(r, ['B', 'MPSI', 'progression']);
+      const attendu = `${gauche}---${droite}`;
+      return {
+        topic: F4.topic, title: `Séparateur personnalisé ${i + 1}`, theory: THEORY_FSTR,
+        statement: `Complétez \`assemble(gauche, droite)\` pour renvoyer \`${attendu}\` en utilisant une f-string ou une concaténation explicite.`,
+        starterCode: starterFn('def assemble(gauche, droite):', ['Placez trois tirets entre les deux textes', 'Renvoyez une chaîne, ne faites pas print()', 'Testez avec les valeurs de l’exemple']),
+        hints: ['Le séparateur demandé est exactement trois tirets.', 'Une f-string peut contenir du texte fixe entre deux variables.', `return f"{gauche}---{droite}"`],
+        visibleTests: [{ kind: 'call', fn: 'assemble', args: [gauche, droite], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'assemble', args: ['X', 'Y'], expect: ['X---Y'] }],
+        solution: 'def assemble(gauche, droite):\n    return f"{gauche}---{droite}"', tips: [],
       };
     }
     const ville = pick(r, VILLES), temp = ri(r, 5, 35);

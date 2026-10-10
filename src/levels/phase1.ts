@@ -418,6 +418,8 @@ min(L)      # 1
 max(L)      # 5
 sorted(L)   # [1, 1, 3, 4, 5] (nouvelle liste triée)
 L.append(9) # ajoute 9 à la fin (modifie L)
+L.reverse() # inverse l’ordre sur place
+L.remove(3) # supprime la première occurrence de 3
 \`\`\`
 
 Attention : \`sorted(L)\` renvoie une **nouvelle** liste sans toucher à L, alors que \`L.sort()\` modifie L sur place.`;
@@ -429,7 +431,7 @@ const F6: FamSpec = {
   gen: (r, i) => {
     const L = intArr(r, 5, 1, 60);
     const x = ri(r, 50, 99);
-    const mode = i % 5;
+    const mode = i % 6;
     const variants: {
       txt: string; code: string; calc: (l: number[]) => any; solExtra?: string;
     }[] = [
@@ -438,6 +440,7 @@ const F6: FamSpec = {
       { txt: `le plus grand élément`, code: 'max(L)', calc: (l) => Math.max(...l) },
       { txt: `le plus petit élément`, code: 'min(L)', calc: (l) => Math.min(...l) },
       { txt: `une nouvelle liste égale à L avec ${x} ajouté à la fin`, code: `L + [${x}]`, calc: (l) => [...l, x] },
+      { txt: 'la liste dans l’ordre inverse', code: 'L[::-1]', calc: (l) => [...l].reverse() },
     ];
     const v = variants[mode];
     const L1 = intArr(r, 6, -20, 40);

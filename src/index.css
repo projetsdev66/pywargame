@@ -30,6 +30,20 @@
   --mono-font: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: .55; }
+  50% { opacity: 1; }
+}
+
+@keyframes spinner-turn {
+  to { transform: rotate(360deg); }
+}
+
 *,
 *::before,
 *::after {
@@ -285,7 +299,13 @@ summary:focus-visible {
   font-size: 13px;
   font-weight: 650;
   text-decoration: none;
-  transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.button-primary:hover:not(:disabled),
+.button-secondary:hover:not(:disabled),
+.button-hint:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .button-primary {
@@ -961,6 +981,7 @@ button:disabled {
 .level-main {
   padding-top: 29px;
   padding-bottom: 70px;
+  animation: reveal-up .32s ease both;
 }
 
 .level-heading {
@@ -1105,6 +1126,12 @@ button:disabled {
   padding: 14px;
   border-top: 2px solid var(--pine);
   box-shadow: 0 5px 0 rgb(45 95 77 / 5%);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.code-lab[data-running="true"] {
+  border-top-color: var(--gold);
+  box-shadow: 0 6px 0 rgb(138 106 50 / 10%);
 }
 
 .lab-heading {
@@ -1172,12 +1199,26 @@ button:disabled {
 }
 
 .execution-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 12px 0 0;
   padding: 9px 10px;
   border-left: 2px solid var(--gold);
   background: #f5f0e5;
   color: #665431;
   font-size: 12px;
+  animation: status-pulse 1.6s ease-in-out infinite;
+}
+
+.execution-spinner {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border: 2px solid rgb(138 106 50 / 30%);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spinner-turn .75s linear infinite;
 }
 
 .output-block,
@@ -1188,6 +1229,7 @@ button:disabled {
   margin-top: 14px;
   border-top: 1px solid var(--rule);
   padding-top: 12px;
+  animation: reveal-up .24s ease both;
 }
 
 .output-block h3,
@@ -1258,6 +1300,7 @@ button:disabled {
   background: #f3f1eb;
   color: var(--ink-soft);
   font-size: 11px;
+  animation: reveal-up .22s ease both;
 }
 
 .test-row.passed {
@@ -1326,6 +1369,17 @@ button:disabled {
 
 .hint-entry .markdown-content {
   margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
 
 .success-panel {

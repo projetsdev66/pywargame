@@ -28,6 +28,7 @@ export function LevelPage({
 }) {
   const [code, setCode] = useState(progress.codes[level.id] ?? level.starterCode);
   const [running, setRunning] = useState(false);
+  const [executionKind, setExecutionKind] = useState<'run' | 'validate'>('run');
   const [stdout, setStdout] = useState<string | null>(null);
   const [pyError, setPyError] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<TestOutcome[] | null>(null);
@@ -54,6 +55,7 @@ export function LevelPage({
   );
 
   const execute = async (validate: boolean) => {
+    setExecutionKind(validate ? 'validate' : 'run');
     setRunning(true);
     setPyError(null);
     setOutcomes(null);
@@ -174,7 +176,7 @@ export function LevelPage({
             )}
           </div>
 
-          <section className="code-lab" aria-labelledby="code-title">
+          <section className="code-lab" data-running={running ? 'true' : 'false'} aria-busy={running} aria-labelledby="code-title">
             <div className="lab-heading">
               <div>
                 <p className="section-label">Atelier Python</p>
@@ -211,10 +213,10 @@ export function LevelPage({
             <p className="editor-shortcut">Raccourci : Ctrl/⌘ + Entrée pour valider.</p>
             <div className="lab-actions">
               <button className="button-secondary" type="button" onClick={() => void execute(false)} disabled={running}>
-                <Play size={15} aria-hidden="true" /> Exécuter
+                <Play size={15} aria-hidden="true" /> {running && executionKind === 'run' ? 'Exécution…' : 'Exécuter'}
               </button>
               <button className="button-primary" type="button" onClick={() => void execute(true)} disabled={running}>
-                <Check size={16} aria-hidden="true" /> Valider
+                <Check size={16} aria-hidden="true" /> {running && executionKind === 'validate' ? 'Validation…' : 'Valider'}
               </button>
               <button
                 className="button-hint"
@@ -226,7 +228,7 @@ export function LevelPage({
               </button>
             </div>
             <p className="test-count-note">Validation : {level.visibleTests.length} tests visibles, {level.hiddenTests.length} tests supplémentaires.</p>
-            {running && <p className="execution-status" role="status" aria-live="polite">Exécution en cours… Le premier chargement de Python peut prendre quelques secondes.</p>}
+            {running && <p className="execution-status" role="status" aria-live="polite"><span className="execution-spinner" aria-hidden="true" />{executionKind === 'validate' ? 'Exécution des tests en cours…' : 'Votre code Python est en cours d’exécution…'} Le premier chargement peut prendre quelques secondes.</p>}
 
             {stdout !== null && stdout !== '' && (
               <section className="output-block" aria-labelledby="output-title" aria-live="polite">

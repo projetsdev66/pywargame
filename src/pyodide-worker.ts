@@ -100,21 +100,30 @@ function sanitize(v: any): any {
 }
 
 function cleanError(msg: string): string {
-  // Garder seulement les lignes utiles du traceback
-  const lines = msg.split('\n').filter((l) => !l.includes('pyodide') && !l.includes('at '));
-  const idx = lines.findIndex((l) => /Error|Exception/.test(l));
-  const cleaned = idx >= 0 ? lines.slice(Math.max(0, idx - 3)).join('\n').trim() : lines.slice(-6).join('\n').trim();
-  const hint = errorHint(cleaned);
-  return hint ? `${cleaned}\n\nPiste : ${hint}` : cleaned;
+  const lines = msg.split('\n').map((line) => line.trimEnd()).filter((line) => !line.includes('pyodide') && !line.includes('at '));
+  const location = lines.find((line) => /File .*line \d+/.test(line));
+  const codeLine = lines.find((line, index) => index > 0 && /^\s*\^?$/.test(line) === false && !/Traceback|File /.test(line) && !/Error|Exception/.test(line));
+  const errorLine = [...lines].reverse().find((line) => /(?:Error|Exception|Warning):/.test(line)) ?? lines[lines.length - 1] ?? 'Erreur inconnue.';
+  const match = errorLine.match(/^([A-Za-z]+(?:Error|Exception|Warning)):\s*(.*)$/);
+  const type = match?.[1] ?? 'Erreur Python';
+  const message = match?.[2] ?? errorLine;
+  const profile = errorProfile(type, message);
+  const output = [`${profile.title} (${type})`, `Message : ${message}`];
+  if (location) output.push(`Emplacement : ${location.replace(/^.*File /, 'fichier ')}`);
+  if (codeLine && codeLine.length < 160) output.push(`Ligne repérée : ${codeLine.trim()}`);
+  output.push(`\nExplication : ${profile.explanation}`, `Question à se poser : ${profile.question}`);
+  return output.join('\n');
 }
 
-function errorHint(message: string): string {
-  if (/SyntaxError|IndentationError/.test(message)) return 'vérifiez les deux-points, les parenthèses et l’indentation de chaque bloc.';
-  if (/NameError/.test(message)) return 'un nom est inconnu : vérifiez l’orthographe et définissez la variable avant de l’utiliser.';
-  if (/TypeError/.test(message)) return 'vérifiez que les opérations utilisent des valeurs compatibles, par exemple str() ou int() si nécessaire.';
-  if (/ZeroDivisionError/.test(message)) return 'un diviseur vaut zéro dans un cas testé : traitez ce cas avant la division.';
-  if (/IndexError/.test(message)) return 'un indice sort de la liste : contrôlez sa borne avec len() ou parcourez directement les éléments.';
-  if (/KeyError/.test(message)) return 'la clé demandée est absente : utilisez get() ou testez son existence avec in.';
-  if (/AttributeError/.test(message)) return 'la méthode ou l’attribut n’existe pas pour ce type : vérifiez le type de la valeur.';
-  return '';
+function errorProfile(type: string, message: string): { title: string; explanation: string; question: string } {
+  if (/SyntaxError|IndentationError/.test(type)) return { title: 'La structure du code est invalide', explanation: 'Python ne peut pas lire la structure : vérifiez les deux-points, les parenthèses et l’indentation du bloc indiqué.', question: 'Chaque if, for, while et def possède-t-il un bloc indenté après ses deux-points ?' };
+  if (/NameError/.test(type)) return { title: 'Un nom est inconnu', explanation: 'Une variable ou une fonction est utilisée avant d’avoir été définie, ou son orthographe ne correspond pas.', question: 'Où ce nom est-il créé, et est-il écrit exactement de la même façon ?' };
+  if (/TypeError/.test(type)) return { title: 'Des types incompatibles sont utilisés', explanation: 'L’opération ou l’appel ne convient pas au type de valeur reçu. Utilisez par exemple int(), float() ou str() si la conversion est justifiée.', question: 'Quel est le type de chacune des valeurs de cette expression ?' };
+  if (/ZeroDivisionError/.test(type)) return { title: 'Division par zéro', explanation: 'Le dénominateur vaut zéro dans ce cas. Il faut traiter ce cas avant d’effectuer la division.', question: 'Que doit renvoyer votre fonction lorsque le diviseur vaut zéro ?' };
+  if (/IndexError/.test(type)) return { title: 'Indice hors limites', explanation: 'L’indice demandé n’existe pas dans la séquence. Une liste de longueur n possède les indices de 0 à n-1.', question: 'Quelle est la longueur de la liste et quelles sont ses bornes valides ?' };
+  if (/KeyError/.test(type)) return { title: 'Clé absente du dictionnaire', explanation: 'La clé demandée n’est pas présente. Utilisez get() ou testez son appartenance si l’absence est possible.', question: 'Que doit-il se passer lorsque cette clé n’existe pas ?' };
+  if (/AttributeError/.test(type)) return { title: 'Attribut ou méthode indisponible', explanation: 'La valeur n’a pas cet attribut ou cette méthode. Vérifiez son type et le nom exact de l’opération.', question: 'La méthode appelée appartient-elle réellement à ce type de valeur ?' };
+  if (/ValueError/.test(type)) return { title: 'Valeur impossible pour cette opération', explanation: 'Le type est accepté, mais la valeur ne respecte pas le format ou le domaine attendu.', question: 'Quelle condition sur l’entrée faut-il vérifier avant cette conversion ou ce calcul ?' };
+  if (/RecursionError/.test(type)) return { title: 'Récursion trop profonde', explanation: 'Les appels récursifs ne rejoignent pas assez vite le cas de base, ou la taille du problème ne diminue pas.', question: 'Quelle quantité diminue strictement à chaque appel ?' };
+  return { title: 'Le programme a rencontré une erreur', explanation: message || 'Le message Python doit être lu avec la ligne indiquée pour localiser la cause.', question: 'Quelle est la première ligne de votre code qui reçoit une valeur inattendue ?' };
 }

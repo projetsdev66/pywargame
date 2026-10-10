@@ -1222,6 +1222,12 @@ button:disabled {
   padding-left: 10px;
 }
 
+.error-intro {
+  margin: 4px 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .test-results ul,
 .tips-panel ul {
   display: grid;

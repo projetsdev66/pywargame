@@ -237,7 +237,8 @@ export function LevelPage({
 
             {pyError && (
               <section className="error-block" role="alert" aria-labelledby="error-title">
-                <h3 id="error-title">Erreur Python</h3>
+                <h3 id="error-title">Diagnostic Python</h3>
+                <p className="error-intro">Lisez d’abord le type d’erreur, puis l’emplacement et la question corrective.</p>
                 <pre>{pyError}</pre>
               </section>
             )}

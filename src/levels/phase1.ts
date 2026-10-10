@@ -2,7 +2,7 @@
 import type { FamSpec } from './util';
 import { ri, pick, intArr, py, starterFn, starterPrint } from './util';
 
-const THEORY_VAR = `## Variables et affectation
+const THEORY_VAR = `## Variables, types et affectation
 
 Une **variable** est un nom qui désigne une valeur. On crée une variable en lui affectant une valeur avec le signe \`=\` :
 
@@ -20,44 +20,81 @@ c = a * b + 2   # c vaut 14
 print(c)
 \`\`\`
 
-La fonction \`print()\` affiche une valeur à l'écran.`;
+La fonction \`print()\` affiche une valeur à l'écran. Pour observer le type court d'une valeur, utilisez \`type(valeur).__name__\` : \`int\`, \`float\`, \`str\` ou \`bool\`. Le nom d'une variable doit décrire son contenu : préférez \`prix_unitaire\` à \`x\`.`;
 
 const F1: FamSpec = {
   key: 'variables',
-  topic: 'Variables et calculs',
+  topic: 'Variables, types et applications',
   count: 20,
   gen: (r, i) => {
-    const a = ri(r, 2, 20), b = ri(r, 2, 15), c = ri(r, 1, 30);
-    const forms: { txt: string; val: number; expr: string }[] = [
-      { txt: `a * b + c`, val: a * b + c, expr: 'a * b + c' },
-      { txt: `(a + b) * c`, val: (a + b) * c, expr: '(a + b) * c' },
-      { txt: `a * (b + c)`, val: a * (b + c), expr: 'a * (b + c)' },
-      { txt: `a ** 2 + b`, val: a * a + b, expr: 'a ** 2 + b' },
-      { txt: `a * b - c`, val: a * b - c, expr: 'a * b - c' },
-      { txt: `c - a + b * 2`, val: c - a + b * 2, expr: 'c - a + b * 2' },
-    ];
-    const f = forms[i % forms.length];
+    const mode = i % 6;
+    if (mode === 0) {
+      const prix = ri(r, 3, 18), quantite = ri(r, 2, 6), livraison = ri(r, 2, 9);
+      const total = prix * quantite + livraison;
+      return {
+        topic: F1.topic, title: `Budget de commande ${i + 1}`, theory: THEORY_VAR,
+        statement: `Une commande contient ${quantite} article(s) à ${prix} € et ${livraison} € de livraison. Créez les variables utiles puis affichez le **total**.`,
+        starterCode: starterPrint(['Stockez le prix unitaire, la quantité et la livraison dans trois variables', 'Calculez le prix des articles puis ajoutez la livraison', 'Affichez le total']),
+        hints: ['Commencez par donner un nom à chaque donnée.', 'Le prix des articles est prix_unitaire * quantite.', `total = ${prix} * ${quantite} + ${livraison}\nprint(total)`],
+        visibleTests: [{ kind: 'stdout', expect: [String(total)] }], hiddenTests: [],
+        solution: `prix_unitaire = ${prix}\nquantite = ${quantite}\nlivraison = ${livraison}\ntotal = prix_unitaire * quantite + livraison\nprint(total)`,
+        tips: [{ pattern: 'print\\(', advice: 'Donner des noms aux données rend le calcul compréhensible, même lorsqu’il est court.', mode: 'prefer' }],
+      };
+    }
+    if (mode === 1) {
+      const longueur = ri(r, 3, 15), largeur = ri(r, 2, 10);
+      const attendu = `Aire : ${longueur * largeur}\nPérimètre : ${2 * (longueur + largeur)}`;
+      return {
+        topic: F1.topic, title: `Plan d’une pièce ${i + 1}`, theory: THEORY_VAR,
+        statement: `Une pièce mesure ${longueur} m sur ${largeur} m. Affichez exactement son aire puis son périmètre, sur deux lignes : \`Aire : ...\` et \`Périmètre : ...\`.`,
+        starterCode: starterPrint(['Créez longueur et largeur', 'Calculez aire et perimetre dans deux variables', 'Affichez les deux résultats avec print()']),
+        hints: ['L’aire est longueur * largeur ; le périmètre fait deux fois la somme.', 'Pour écrire du texte et une valeur, print("Aire :", aire) ajoute un espace.', `longueur = ${longueur}\nlargeur = ${largeur}\nprint("Aire :", longueur * largeur)\nprint("Périmètre :", 2 * (longueur + largeur))`],
+        visibleTests: [{ kind: 'stdout', expect: [attendu] }], hiddenTests: [],
+        solution: `longueur = ${longueur}\nlargeur = ${largeur}\naire = longueur * largeur\nperimetre = 2 * (longueur + largeur)\nprint("Aire :", aire)\nprint("Périmètre :", perimetre)`, tips: [],
+      };
+    }
+    if (mode === 2) {
+      const entier = ri(r, 2, 40), decimal = ri(r, 12, 98) / 10, texte = pick(r, ['Python', 'MPSI', 'algorithme']);
+      return {
+        topic: F1.topic, title: `Identifier les types ${i + 1}`, theory: THEORY_VAR,
+        statement: `Créez quatre variables : un entier (${entier}), un nombre décimal (${decimal}), le texte \`${texte}\` et le booléen \`True\`. Affichez leur type, un par ligne, avec le nom court du type : \`int\`, \`float\`, \`str\`, \`bool\`.`,
+        starterCode: starterPrint(['Créez les quatre variables demandées', 'Utilisez type(valeur).__name__ pour obtenir le nom court', 'Affichez les quatre noms de types dans l’ordre']),
+        hints: ['Les types étudiés dans le cours sont int, float, str et bool.', 'type(x).__name__ renvoie par exemple "int", sans le texte <class ...>.', `entier = ${entier}\ndecimal = ${decimal}\ntexte = "${texte}"\nbooleen = True\nprint(type(entier).__name__)\nprint(type(decimal).__name__)\nprint(type(texte).__name__)\nprint(type(booleen).__name__)`],
+        visibleTests: [{ kind: 'stdout', expect: ['int\nfloat\nstr\nbool'] }], hiddenTests: [],
+        solution: `entier = ${entier}\ndecimal = ${decimal}\ntexte = "${texte}"\nbooleen = True\nprint(type(entier).__name__)\nprint(type(decimal).__name__)\nprint(type(texte).__name__)\nprint(type(booleen).__name__)`, tips: [],
+      };
+    }
+    if (mode === 3) {
+      const prenom = pick(r, ['Alice', 'Malik', 'Zoé', 'Hugo']), age = ri(r, 12, 25);
+      return {
+        topic: F1.topic, title: `Carte de présentation ${i + 1}`, theory: THEORY_VAR,
+        statement: `Créez les variables \`prenom\` et \`age\`, puis affichez : \`Prénom : ${prenom} | Âge : ${age}\`.`,
+        starterCode: starterPrint(['Créez une variable texte prenom', 'Créez une variable entière age', 'Assemblez le message avec print()']),
+        hints: ['Une variable texte s’écrit entre guillemets.', 'print accepte plusieurs valeurs séparées par des virgules.', `prenom = "${prenom}"\nage = ${age}\nprint("Prénom :", prenom, "| Âge :", age)`],
+        visibleTests: [{ kind: 'stdout', expect: [`Prénom : ${prenom} | Âge : ${age}`] }], hiddenTests: [],
+        solution: `prenom = "${prenom}"\nage = ${age}\nprint("Prénom :", prenom, "| Âge :", age)`, tips: [],
+      };
+    }
+    if (mode === 4) {
+      const minutes = ri(r, 70, 320), heures = Math.floor(minutes / 60), reste = minutes % 60;
+      return {
+        topic: F1.topic, title: `Durée d’un trajet ${i + 1}`, theory: THEORY_VAR,
+        statement: `Un trajet dure ${minutes} minutes. Affichez sa durée en minutes et secondes symboliques sous la forme : \`${heures} h ${reste} min\`.`,
+        starterCode: starterPrint(['Stockez la durée totale', 'Calculez les heures entières et les minutes restantes', 'Affichez le résultat avec print()']),
+        hints: ['Une heure contient 60 minutes.', 'Le quotient entier et le reste seront utiles : minutes // 60 et minutes % 60.', `duree = ${minutes}\nprint(duree // 60, "h", duree % 60, "min")`],
+        visibleTests: [{ kind: 'stdout', expect: [`${heures} h ${reste} min`] }], hiddenTests: [],
+        solution: `duree = ${minutes}\nheures = duree // 60\nminutes_restantes = duree % 60\nprint(heures, "h", minutes_restantes, "min")`, tips: [],
+      };
+    }
+    const note1 = ri(r, 8, 18), note2 = ri(r, 8, 18), coefficient = ri(r, 2, 5);
+    const moyenneArrondie = Math.round(((note1 + coefficient * note2) / (1 + coefficient)) * 100) / 100;
     return {
-      topic: F1.topic,
-      title: `Premier calcul ${i + 1}`,
-      theory: THEORY_VAR,
-      statement: `Créez trois variables \`a = ${a}\`, \`b = ${b}\` et \`c = ${c}\`, puis affichez avec \`print()\` le résultat de l'expression \`${f.txt}\`.`,
-      starterCode: starterPrint([
-        `Créez les variables a = ${a}, b = ${b}, c = ${c}`,
-        `Calculez l'expression ${f.txt} dans une nouvelle variable`,
-        'Affichez le résultat avec print()',
-      ]),
-      hints: [
-        'Une variable se crée avec le signe =, par exemple : a = 7',
-        'Stockez le calcul dans une variable resultat, puis faites print(resultat).',
-        `L'expression s'écrit presque comme en maths : ${f.expr}`,
-      ],
-      visibleTests: [{ kind: 'stdout', expect: [String(f.val)] }],
-      hiddenTests: [],
-      solution: `a = ${a}\nb = ${b}\nc = ${c}\nresultat = ${f.expr}\nprint(resultat)`,
-      tips: [
-        { pattern: '^print\\(', advice: 'Vous pouvez afficher directement : print(' + f.expr + ') — mais stocker dans une variable nommée rend le code plus lisible.', mode: 'prefer' },
-      ],
+      topic: F1.topic, title: `Moyenne pondérée ${i + 1}`, theory: THEORY_VAR,
+      statement: `Deux notes valent ${note1} et ${note2}, la seconde ayant un coefficient ${coefficient}. Affichez la moyenne pondérée arrondie à deux décimales.`,
+      starterCode: starterPrint(['Créez les trois variables numériques', 'Calculez (note1 + coefficient * note2) / (1 + coefficient)', 'Utilisez round(resultat, 2) puis print()']),
+      hints: ['Le coefficient augmente le poids de la seconde note.', 'Le dénominateur est la somme des coefficients.', `moyenne = (${note1} + ${coefficient} * ${note2}) / (1 + ${coefficient})\nprint(round(moyenne, 2))`],
+      visibleTests: [{ kind: 'stdout', expect: [Number.isInteger(moyenneArrondie) ? `${moyenneArrondie}.0` : String(moyenneArrondie)] }], hiddenTests: [],
+      solution: `note1 = ${note1}\nnote2 = ${note2}\ncoefficient = ${coefficient}\nmoyenne = (note1 + coefficient * note2) / (1 + coefficient)\nprint(round(moyenne, 2))`, tips: [],
     };
   },
 };
@@ -77,36 +114,50 @@ const F2: FamSpec = {
   topic: 'Opérateurs //, %, **',
   count: 20,
   gen: (r, i) => {
-    const a = ri(r, 20, 500), b = ri(r, 3, 19);
-    const mode = i % 3;
-    const q = Math.floor(a / b), m = a % b;
-    const powBase = ri(r, 2, 5), powExp = ri(r, 3, 8);
-    const stmts = [
-      `Affichez le quotient entier de la division de ${a} par ${b} (opérateur \`//\`).`,
-      `Affichez le reste de la division de ${a} par ${b} (opérateur \`%\`).`,
-      `Affichez ${powBase} puissance ${powExp} (opérateur \`**\`).`,
-    ];
-    const expected = [String(q), String(m), String(powBase ** powExp)];
-    const sols = [`print(${a} // ${b})`, `print(${a} % ${b})`, `print(${powBase} ** ${powExp})`];
-    const hintsCommon = [
-      'Relisez la théorie : chaque opérateur a un symbole précis.',
-      mode === 0 ? 'Le quotient entier s\'obtient avec // (deux barres).' : mode === 1 ? 'Le reste s\'obtient avec le symbole pourcent.' : 'La puissance s\'écrit avec deux étoiles.',
-      sols[mode],
-    ];
-    return {
-      topic: F2.topic,
-      title: `Opérateurs ${i + 1}`,
-      theory: THEORY_OP,
-      statement: stmts[mode],
-      starterCode: starterPrint([stmts[mode], 'Un seul print() suffit']),
-      hints: hintsCommon,
-      visibleTests: [{ kind: 'stdout', expect: [expected[mode]] }],
-      hiddenTests: [],
-      solution: sols[mode],
-      tips: [
-        { pattern: '/', advice: mode === 0 ? 'Utiliser int(a / b) fonctionne mais // est l\'opérateur prévu : plus direct et plus lisible.' : 'Bon réflexe : / donne un float, pensez à // pour les entiers.', mode: 'avoid' },
-      ],
-    };
+    const mode = i % 5;
+    if (mode === 0) {
+      const objets = ri(r, 23, 180), carton = ri(r, 4, 12), boites = Math.floor(objets / carton), reste = objets % carton;
+      const attendu = `Boîtes pleines : ${boites}\nObjets restants : ${reste}`;
+      return { topic: F2.topic, title: `Cartons à remplir ${i + 1}`, theory: THEORY_OP,
+        statement: `Il faut ranger ${objets} objets dans des cartons de ${carton}. Affichez le nombre de cartons pleins puis le nombre d’objets restants.`,
+        starterCode: starterPrint(['Stockez le nombre d’objets et la capacité d’un carton', 'Utilisez // pour les cartons pleins et % pour le reste', 'Affichez les deux résultats']),
+        hints: ['La division entière donne le nombre de groupes complets.', 'Le reste donne les objets qui ne remplissent pas un carton.', `print("Boîtes pleines :", ${objets} // ${carton})\nprint("Objets restants :", ${objets} % ${carton})`],
+        visibleTests: [{ kind: 'stdout', expect: [attendu] }], hiddenTests: [],
+        solution: `objets = ${objets}\ncapacite = ${carton}\nprint("Boîtes pleines :", objets // capacite)\nprint("Objets restants :", objets % capacite)`, tips: [] };
+    }
+    if (mode === 1) {
+      const participants = ri(r, 28, 160), groupe = ri(r, 4, 9), groupes = Math.floor(participants / groupe), reste = participants % groupe;
+      const attendu = `${groupes} groupes complets, ${reste} personne(s) seule(s)`;
+      return { topic: F2.topic, title: `Répartir un groupe ${i + 1}`, theory: THEORY_OP,
+        statement: `Répartissez ${participants} participants par groupes de ${groupe}. Affichez : \`${attendu}\` (avec les nombres calculés).`,
+        starterCode: starterPrint(['Calculez le nombre de groupes complets', 'Calculez le nombre de personnes restantes', 'Utilisez print() avec plusieurs valeurs']),
+        hints: ['Le quotient entier correspond aux groupes complets.', 'Le reste correspond aux personnes non regroupées.', `print(${participants} // ${groupe}, "groupes complets,", ${participants} % ${groupe}, "personne(s) seule(s)")`],
+        visibleTests: [{ kind: 'stdout', expect: [attendu] }], hiddenTests: [],
+        solution: `participants = ${participants}\ntaille = ${groupe}\ngroupes = participants // taille\nseules = participants % taille\nprint(groupes, "groupes complets,", seules, "personne(s) seule(s)")`, tips: [] };
+    }
+    if (mode === 2) {
+      const cote = ri(r, 3, 12), dalles = cote ** 2;
+      return { topic: F2.topic, title: `Dallage carré ${i + 1}`, theory: THEORY_OP,
+        statement: `Un sol carré possède ${cote} dalles sur chaque côté. Affichez le nombre total de dalles en utilisant une puissance.`,
+        starterCode: starterPrint(['Stockez le nombre de dalles sur un côté', 'Un carré de côté c contient c ** 2 dalles', 'Affichez le résultat']),
+        hints: ['Une puissance se note avec deux étoiles.', 'Le nombre total est côté multiplié par lui-même.', `cote = ${cote}\nprint(cote ** 2)`],
+        visibleTests: [{ kind: 'stdout', expect: [String(dalles)] }], hiddenTests: [], solution: `cote = ${cote}\nprint(cote ** 2)`, tips: [] };
+    }
+    if (mode === 3) {
+      const n = ri(r, 2, 6), cubes = n ** 3;
+      return { topic: F2.topic, title: `Volume d’un cube ${i + 1}`, theory: THEORY_OP,
+        statement: `Un cube mesure ${n} unités sur chaque arête. Affichez son volume avec l’opérateur de puissance.`,
+        starterCode: starterPrint(['Créez la variable arete', 'Le volume d’un cube est arete ** 3', 'Affichez le volume']),
+        hints: ['Le volume multiplie trois fois la longueur.', 'L’exposant 3 représente les trois dimensions.', `arete = ${n}\nprint(arete ** 3)`],
+        visibleTests: [{ kind: 'stdout', expect: [String(cubes)] }], hiddenTests: [], solution: `arete = ${n}\nprint(arete ** 3)`, tips: [] };
+    }
+    const nombre = ri(r, 120, 999), dizaines = Math.floor(nombre / 10) % 10, unite = nombre % 10;
+    const attendu = `Dizaines : ${dizaines}\nUnités : ${unite}`;
+    return { topic: F2.topic, title: `Extraire les chiffres ${i + 1}`, theory: THEORY_OP,
+      statement: `Pour le nombre ${nombre}, affichez le chiffre des dizaines puis celui des unités.`,
+      starterCode: starterPrint(['Le chiffre des unités est le reste de la division par 10', 'Pour les dizaines, supprimez d’abord les unités avec // 10', 'Affichez les deux chiffres']),
+      hints: ['Les unités sont nombre % 10.', 'Les dizaines sont (nombre // 10) % 10.', `print("Dizaines :", (${nombre} // 10) % 10)\nprint("Unités :", ${nombre} % 10)`],
+      visibleTests: [{ kind: 'stdout', expect: [attendu] }], hiddenTests: [], solution: `nombre = ${nombre}\nprint("Dizaines :", (nombre // 10) % 10)\nprint("Unités :", nombre % 10)`, tips: [] };
   },
 };
 

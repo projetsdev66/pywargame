@@ -1268,4 +1268,102 @@ const F12: FamSpec = {
   },
 };
 
-export const PHASE1: FamSpec[] = [F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12];
+const F13: FamSpec = {
+  key: 'synthese-bases',
+  topic: 'Défis de synthèse — bases du cours',
+  count: 10,
+  gen: (r, i) => {
+    const mode = i % 10;
+    if (mode === 0) {
+      const notes = intArr(r, 4, 8, 19), moyenne = notes.reduce((a, b) => a + b, 0) / notes.length;
+      return { topic: F13.topic, title: `Moyenne d’une classe ${i + 1}`, theory: THEORY_FONC,
+        statement: `Écrivez \`moyenne(notes)\` qui renvoie la moyenne des notes de la liste. Exemple : \`moyenne(${py(notes)})\` → ${moyenne}.`,
+        starterCode: starterFn('def moyenne(notes):', ['Utilisez sum() et len()', 'La liste contient au moins une note', 'Renvoyez un nombre, ne faites pas print()']),
+        hints: ['La somme des notes se calcule avec sum(notes).', 'La moyenne divise cette somme par len(notes).', 'return sum(notes) / len(notes)'],
+        visibleTests: [{ kind: 'call', fn: 'moyenne', args: [notes], expect: [moyenne], tol: 1e-9 }], hiddenTests: [{ kind: 'call', fn: 'moyenne', args: [[10, 12, 14]], expect: [12], tol: 1e-9 }],
+        solution: 'def moyenne(notes):\n    return sum(notes) / len(notes)', tips: [] };
+    }
+    if (mode === 1) {
+      const valeurs = intArr(r, 7, -9, 12), attendu = valeurs.filter((x) => x > 0).length;
+      return { topic: F13.topic, title: `Compter les positifs ${i + 1}`, theory: THEORY_FOR,
+        statement: `Écrivez \`compte_positifs(valeurs)\` qui compte les nombres strictement positifs. Exemple : \`${py(valeurs)}\` → ${attendu}.`,
+        starterCode: starterFn('def compte_positifs(valeurs):', ['Initialisez un compteur à 0', 'Parcourez chaque valeur avec for', 'Incrémentez seulement si la valeur est > 0']),
+        hints: ['Un compteur se met à 0 avant la boucle.', 'La condition doit exclure 0.', 'compteur = 0\nfor valeur in valeurs:\n    if valeur > 0:\n        compteur += 1\nreturn compteur'],
+        visibleTests: [{ kind: 'call', fn: 'compte_positifs', args: [valeurs], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'compte_positifs', args: [[-2, 0, 4, 7]], expect: [2] }],
+        solution: 'def compte_positifs(valeurs):\n    compteur = 0\n    for valeur in valeurs:\n        if valeur > 0:\n            compteur += 1\n    return compteur', tips: [] };
+    }
+    if (mode === 2) {
+      const mots = [pick(r, ['chat', 'renard', 'ours']), pick(r, ['python', 'algorithme', 'code']), pick(r, ['MPSI', 'classe', 'cours'])];
+      const attendu = mots.reduce((best, mot) => mot.length > best.length ? mot : best, mots[0]);
+      return { topic: F13.topic, title: `Mot le plus long ${i + 1}`, theory: THEORY_FOR,
+        statement: `Écrivez \`plus_long(mots)\` qui renvoie le premier mot le plus long. Exemple : \`${py(mots)}\` → \`${attendu}\`.`,
+        starterCode: starterFn('def plus_long(mots):', ['Conservez un meilleur candidat', 'Comparez les longueurs avec len()', 'En cas d’égalité, gardez le premier']),
+        hints: ['Initialisez meilleur avec mots[0].', 'Remplacez-le seulement si len(mot) > len(meilleur).', 'for mot in mots[1:]:\n    if len(mot) > len(meilleur):\n        meilleur = mot\nreturn meilleur'],
+        visibleTests: [{ kind: 'call', fn: 'plus_long', args: [mots], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'plus_long', args: [['aa', 'bbb', 'cc']], expect: ['bbb'] }],
+        solution: 'def plus_long(mots):\n    meilleur = mots[0]\n    for mot in mots[1:]:\n        if len(mot) > len(meilleur):\n            meilleur = mot\n    return meilleur', tips: [] };
+    }
+    if (mode === 3) {
+      const prix = { pain: 2, lait: 3, riz: 4 }, quantites = { pain: 2, lait: 1, riz: 3 }, total = 2 * 2 + 3 + 4 * 3;
+      return { topic: F13.topic, title: `Total d’un inventaire ${i + 1}`, theory: THEORY_DICT,
+        statement: `Écrivez \`total_inventaire(prix, quantites)\` qui calcule la somme prix[article] × quantites[article]. Exemple avec \`${py(prix)}\` et \`${py(quantites)}\` → ${total}.`,
+        starterCode: starterFn('def total_inventaire(prix, quantites):', ['Initialisez total à 0', 'Parcourez les articles de quantites', 'Ajoutez prix[article] * quantites[article]']),
+        hints: ['Les clés communes sont les noms des articles.', 'Utilisez for article in quantites.', 'total += prix[article] * quantites[article]'],
+        visibleTests: [{ kind: 'call', fn: 'total_inventaire', args: [prix, quantites], expect: [total] }], hiddenTests: [{ kind: 'call', fn: 'total_inventaire', args: [{ a: 5 }, { a: 4 }], expect: [20] }],
+        solution: 'def total_inventaire(prix, quantites):\n    total = 0\n    for article in quantites:\n        total += prix[article] * quantites[article]\n    return total', tips: [] };
+    }
+    if (mode === 4) {
+      const texte = pick(r, ['  Python est utile  ', '  apprendre par projets  ']), attendu = texte.trim().toLowerCase().split(/\s+/);
+      return { topic: F13.topic, title: `Nettoyer une phrase ${i + 1}`, theory: THEORY_STR,
+        statement: `Écrivez \`mots_propres(texte)\` qui renvoie la liste des mots de la phrase après suppression des espaces extérieurs et conversion en minuscules.`,
+        starterCode: starterFn('def mots_propres(texte):', ['Utilisez strip() puis lower()', 'Découpez la phrase avec split()', 'Renvoyez la liste obtenue']),
+        hints: ['Les méthodes peuvent être enchaînées.', 'strip() enlève les espaces aux extrémités.', 'return texte.strip().lower().split()'],
+        visibleTests: [{ kind: 'call', fn: 'mots_propres', args: [texte], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'mots_propres', args: [' Bonjour  TOI '], expect: [['bonjour', 'toi']] }],
+        solution: 'def mots_propres(texte):\n    return texte.strip().lower().split()', tips: [] };
+    }
+    if (mode === 5) {
+      const valeurs = intArr(r, 6, 1, 20), attendu = valeurs.find((x) => x % 2 === 0) ?? null;
+      return { topic: F13.topic, title: `Premier nombre pair ${i + 1}`, theory: THEORY_FOR,
+        statement: `Écrivez \`premier_pair(valeurs)\` qui renvoie le premier nombre pair, ou \`None\` s’il n’y en a pas. Exemple : \`${py(valeurs)}\` → ${py(attendu)}.`,
+        starterCode: starterFn('def premier_pair(valeurs):', ['Parcourez la liste dans l’ordre', 'Testez le reste de la division par 2', 'Retournez None après la boucle si aucun pair n’a été trouvé']),
+        hints: ['Un nombre pair vérifie x % 2 == 0.', 'Retourner dès la première réussite évite de parcourir le reste.', 'for valeur in valeurs:\n    if valeur % 2 == 0:\n        return valeur\nreturn None'],
+        visibleTests: [{ kind: 'call', fn: 'premier_pair', args: [valeurs], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'premier_pair', args: [[1, 3, 5]], expect: [null] }],
+        solution: 'def premier_pair(valeurs):\n    for valeur in valeurs:\n        if valeur % 2 == 0:\n            return valeur\n    return None', tips: [] };
+    }
+    if (mode === 6) {
+      const texte = pick(r, ['banana', 'abracadabra', 'mississippi']), attendu = [...texte].reduce<Record<string, number>>((d, c) => ({ ...d, [c]: (d[c] ?? 0) + 1 }), {});
+      return { topic: F13.topic, title: `Fréquence des caractères ${i + 1}`, theory: THEORY_DICT,
+        statement: `Écrivez \`frequences(texte)\` qui renvoie un dictionnaire caractère → nombre d’occurrences.`,
+        starterCode: starterFn('def frequences(texte):', ['Créez un dictionnaire vide', 'Pour chaque caractère, utilisez get(c, 0)', 'Ajoutez 1 à la fréquence']),
+        hints: ['d.get(c, 0) donne 0 si la clé est absente.', 'Le dictionnaire doit être mis à jour à chaque caractère.', 'frequence[c] = frequence.get(c, 0) + 1'],
+        visibleTests: [{ kind: 'call', fn: 'frequences', args: [texte], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'frequences', args: ['aab'], expect: [{ a: 2, b: 1 }] }],
+        solution: 'def frequences(texte):\n    resultat = {}\n    for caractere in texte:\n        resultat[caractere] = resultat.get(caractere, 0) + 1\n    return resultat', tips: [] };
+    }
+    if (mode === 7) {
+      const valeurs = intArr(r, 5, 1, 9), k = ri(r, 1, 4), attendu = valeurs.slice(k).concat(valeurs.slice(0, k));
+      return { topic: F13.topic, title: `Rotation de liste ${i + 1}`, theory: THEORY_LISTES,
+        statement: `Écrivez \`rotation(valeurs, k)\` qui place les k premiers éléments à la fin. Exemple : \`${py(valeurs)}, ${k}\` → \`${py(attendu)}\`.`,
+        starterCode: starterFn('def rotation(valeurs, k):', ['Découpez à partir de k', 'Ajoutez la tranche du début', 'Construisez une nouvelle liste']),
+        hints: ['La première partie est valeurs[k:].', 'La partie déplacée est valeurs[:k].', 'return valeurs[k:] + valeurs[:k]'],
+        visibleTests: [{ kind: 'call', fn: 'rotation', args: [valeurs, k], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'rotation', args: [[1, 2, 3, 4], 2], expect: [[3, 4, 1, 2]] }],
+        solution: 'def rotation(valeurs, k):\n    return valeurs[k:] + valeurs[:k]', tips: [] };
+    }
+    if (mode === 8) {
+      const mot = pick(r, ['radar', 'kayak', 'python']), attendu = mot === [...mot].reverse().join('');
+      return { topic: F13.topic, title: `Tester un palindrome ${i + 1}`, theory: THEORY_STR,
+        statement: `Écrivez \`est_palindrome(mot)\` qui renvoie \`True\` si le mot se lit dans les deux sens.`,
+        starterCode: starterFn('def est_palindrome(mot):', ['Inversez le mot avec une tranche', 'Comparez le mot original et le mot inversé', 'Renvoyez directement le booléen']),
+        hints: ['mot[::-1] inverse une chaîne.', 'Une comparaison renvoie déjà True ou False.', 'return mot == mot[::-1]'],
+        visibleTests: [{ kind: 'call', fn: 'est_palindrome', args: [mot], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'est_palindrome', args: ['radar'], expect: [true] }],
+        solution: 'def est_palindrome(mot):\n    return mot == mot[::-1]', tips: [] };
+    }
+    const valeurs = intArr(r, 5, 2, 9), attendu = valeurs.map((x) => x * x);
+    return { topic: F13.topic, title: `Transformer une série ${i + 1}`, theory: THEORY_FOR,
+      statement: `Écrivez \`carres(valeurs)\` qui renvoie la liste des carrés, dans le même ordre.`,
+      starterCode: starterFn('def carres(valeurs):', ['Créez une liste vide', 'Parcourez les valeurs', 'Ajoutez valeur ** 2 puis retournez la liste']),
+      hints: ['Le carré de x est x ** 2.', 'Utilisez append() pour construire le résultat.', 'return [valeur ** 2 for valeur in valeurs]'],
+      visibleTests: [{ kind: 'call', fn: 'carres', args: [valeurs], expect: [attendu] }], hiddenTests: [{ kind: 'call', fn: 'carres', args: [[0, 3, 4]], expect: [[0, 9, 16]] }],
+      solution: 'def carres(valeurs):\n    return [valeur ** 2 for valeur in valeurs]', tips: [] };
+  },
+};
+
+export const PHASE1: FamSpec[] = [F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13];

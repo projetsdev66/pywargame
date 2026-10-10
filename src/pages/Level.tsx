@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { python } from '@codemirror/lang-python';
-import { ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown, Lightbulb, Play, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown, Lightbulb, Play, RotateCcw, Square } from 'lucide-react';
 import type { Level } from '@/types/level';
 import { getLevel, LEVELS, needsNumpy, TOTAL } from '@/levels';
 import { findSessionForLevel } from '@/lib/catalog';
-import { runLevel, type TestOutcome } from '@/lib/pyodide';
+import { cancelRun, runLevel, type TestOutcome } from '@/lib/pyodide';
 import { analyseCode, type Progress } from '@/lib/progress';
 import { Markdown } from '@/components/Markdown';
 
@@ -29,6 +29,8 @@ export function LevelPage({
   const [code, setCode] = useState(progress.codes[level.id] ?? level.starterCode);
   const [running, setRunning] = useState(false);
   const [executionKind, setExecutionKind] = useState<'run' | 'validate'>('run');
+  const [executionSummary, setExecutionSummary] = useState<{ durationMs: number; status: 'success' | 'error' | 'cancelled' } | null>(null);
+  const [executionNotice, setExecutionNotice] = useState<string | null>(null);
   const [stdout, setStdout] = useState<string | null>(null);
   const [pyError, setPyError] = useState<string | null>(null);
   const [outcomes, setOutcomes] = useState<TestOutcome[] | null>(null);
@@ -57,15 +59,22 @@ export function LevelPage({
   const execute = async (validate: boolean) => {
     setExecutionKind(validate ? 'validate' : 'run');
     setRunning(true);
+    const startedAt = performance.now();
     setPyError(null);
     setOutcomes(null);
     setStdout(null);
+    setExecutionSummary(null);
+    setExecutionNotice(null);
     onSaveCode(level.id, code);
     try {
       const tests = validate ? allTests : [];
       const { outcomes: results, run } = await runLevel(code, tests, needsNumpy(level));
+      const durationMs = Math.round(performance.now() - startedAt);
+      setExecutionSummary({ durationMs, status: run.cancelled ? 'cancelled' : (run.timedOut || run.error ? 'error' : 'success') });
       setStdout(run.stdout || '');
-      if (run.timedOut) {
+      if (run.cancelled) {
+        setExecutionNotice('Exécution arrêtée à votre demande. Le code n’a pas été considéré comme validé.');
+      } else if (run.timedOut) {
         setPyError(`Temps dépassé : votre code a mis plus de ${needsNumpy(level) ? 90 : 12} secondes. Vérifiez les boucles (risque de boucle infinie).`);
       } else if (run.error) {
         setPyError(run.error);
@@ -83,6 +92,11 @@ export function LevelPage({
     } finally {
       setRunning(false);
     }
+  };
+
+  const stopExecution = () => {
+    if (!running) return;
+    cancelRun();
   };
 
   const visibleOutcomes = outcomes?.filter((outcome) => outcome.visible) ?? [];
@@ -218,6 +232,7 @@ export function LevelPage({
               <button className="button-primary" type="button" onClick={() => void execute(true)} disabled={running}>
                 <Check size={16} aria-hidden="true" /> {running && executionKind === 'validate' ? 'Validation…' : 'Valider'}
               </button>
+              {running && <button className="button-danger stop-button" type="button" onClick={stopExecution}><Square size={14} aria-hidden="true" /> Arrêter</button>}
               <button
                 className="button-hint"
                 type="button"
@@ -230,10 +245,14 @@ export function LevelPage({
             <p className="test-count-note">Validation : {level.visibleTests.length} tests visibles, {level.hiddenTests.length} tests supplémentaires.</p>
             {running && <p className="execution-status" role="status" aria-live="polite"><span className="execution-spinner" aria-hidden="true" />{executionKind === 'validate' ? 'Exécution des tests en cours…' : 'Votre code Python est en cours d’exécution…'} Le premier chargement peut prendre quelques secondes.</p>}
 
-            {stdout !== null && stdout !== '' && (
-              <section className="output-block" aria-labelledby="output-title" aria-live="polite">
-                <h3 id="output-title">Sortie du programme</h3>
-                <pre>{stdout}</pre>
+            {(executionSummary || executionNotice || stdout !== null) && (
+              <section className="execution-console" aria-labelledby="console-title" aria-live="polite">
+                <div className="console-heading">
+                  <h3 id="console-title">Console d’exécution</h3>
+                  {executionSummary && <span className={`console-status ${executionSummary.status}`}>{executionSummary.status === 'success' ? 'Terminée' : executionSummary.status === 'cancelled' ? 'Arrêtée' : 'Avec erreur'} · {(executionSummary.durationMs / 1000).toFixed(2)} s</span>}
+                </div>
+                <pre>{stdout || '(aucune sortie affichée)'}</pre>
+                {executionNotice && <p className="console-notice">{executionNotice}</p>}
               </section>
             )}
 

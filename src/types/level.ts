@@ -44,4 +44,5 @@ export interface RunResult {
   calls: { ok: boolean; got: unknown; error?: string }[];
   error?: string; // erreur Python lisible
   timedOut?: boolean;
+  cancelled?: boolean;
 }

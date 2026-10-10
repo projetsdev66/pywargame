@@ -77,6 +77,7 @@ function guideFor(key: string, phase: number, topic: string): TheoryGuide {
     zeros: { prerequisites: 'Fonctions, intervalles et dichotomie.', keyIdea: 'La dichotomie conserve un changement de signe et divise l’intervalle par deux.', method: 'Vérifier f(a)f(b) ≤ 0, choisir le sous-intervalle pertinent et fixer une tolérance.', pitfalls: 'Utiliser une fonction sans changement de signe ou arrêter sur une largeur mal mesurée.' },
     euler: { prerequisites: 'Suites, fonctions et dérivée.', keyIdea: 'Euler remplace localement la courbe par sa tangente : yₙ₊₁ = yₙ + h f(tₙ,yₙ).', method: 'Mettre à jour t et y dans le bon ordre et comparer avec un pas plus petit.', pitfalls: 'Confondre h et le nombre de pas, ou évaluer f au mauvais point.' },
     courbes: { prerequisites: 'NumPy et tableaux de valeurs.', keyIdea: 'Une courbe numérique est un couple de tableaux de même longueur.', method: 'Construire un axe régulier, appliquer la fonction vectorisée et vérifier les formes.', pitfalls: 'Axes de longueurs différentes ou fonction non vectorisable.' },
+    'synthese-bases': { prerequisites: 'Variables, listes, boucles, conditions, chaînes et fonctions.', keyIdea: 'Un problème de synthèse se découpe en opérations simples reliées par une spécification.', method: 'Identifier les données, écrire un invariant pour chaque parcours, puis tester un cas nominal et un cas limite.', pitfalls: 'Mélanger affichage et valeur renvoyée, oublier un cas vide ou coder sans vérifier le type du résultat.' },
   };
   return guides[key] ?? {
     prerequisites: `Les notions précédentes de la phase ${phase} et les opérations de base de Python.`,
@@ -142,6 +143,7 @@ export function learningMetadata(key: string, phase: number, index: number, coun
     comprehensions: ['compréhensions', 'filtres'], 'double-boucle': ['boucles imbriquées', 'complexité'],
     'numpy-bases': ['NumPy', 'vectorisation'], 'numpy-masques': ['NumPy', 'masques'], suites: ['suites', 'récurrence'],
     integration: ['intégration', 'approximation'], zeros: ['zéros', 'dichotomie'], euler: ['Euler', 'équations différentielles'], courbes: ['NumPy', 'visualisation'],
+    'synthese-bases': ['synthèse', 'cas limites'],
   };
   const skills = skillMap[key] ?? [topic];
   const prerequisite = difficulty <= 1 ? 'Aucun prérequis' : difficulty === 2 ? 'Notions précédentes de la famille' : `Niveau ${difficulty - 1} de la famille`;

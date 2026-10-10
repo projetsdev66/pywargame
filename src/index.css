@@ -1198,6 +1198,60 @@ button:disabled {
   margin-top: 13px;
 }
 
+.stop-button {
+  margin-left: auto;
+}
+
+.execution-console {
+  margin-top: 14px;
+  border: 1px solid #394741;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  animation: reveal-up .24s ease both;
+}
+
+.console-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #394741;
+}
+
+.console-heading h3 {
+  margin: 0;
+  font: 600 11px var(--mono-font);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.console-status {
+  color: #b9d7c2;
+  font: 10px var(--mono-font);
+}
+
+.console-status.error { color: #f0b0a8; }
+.console-status.cancelled { color: #f0d096; }
+
+.execution-console pre {
+  max-height: 230px;
+  overflow: auto;
+  margin: 0;
+  padding: 13px;
+  font: 12px/1.6 var(--mono-font);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.console-notice {
+  margin: 0;
+  padding: 9px 13px;
+  border-top: 1px solid #394741;
+  color: #f0d096;
+  font-size: 11px;
+}
+
 .execution-status {
   display: flex;
   align-items: center;

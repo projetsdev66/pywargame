@@ -96,11 +96,16 @@ export async function runLevel(
     calls: [],
     error: r.error === 'TIMEOUT' ? undefined : r.error,
     timedOut: r.timedOut,
+    cancelled: r.cancelled,
   };
 
   const outcomes: TestOutcome[] = [];
   if (r.timedOut) {
     for (const t of tests) outcomes.push({ ...t, passed: false, detail: '' });
+    return { outcomes, run };
+  }
+  if (r.cancelled) {
+    for (const t of tests) outcomes.push({ ...t, passed: false, detail: 'Exécution interrompue avant la fin des tests.' });
     return { outcomes, run };
   }
   if (r.error) {
@@ -135,8 +140,7 @@ export async function runLevel(
           passed: ok,
           detail: ok
             ? ''
-            : `${c.fn}(${c.args.map((a) => fmt(a)).join(', ')}) a renvoyé ${fmt(res.got)}` +
-              (t.visible ? ` — attendu : ${c.expect.map(fmt).join(' ou ')}` : ' (test caché : valeur incorrecte)'),
+            : `Entrée testée : ${c.fn}(${c.args.map((a) => fmt(a)).join(', ')})\nRésultat obtenu : ${fmt(res.got)}\nRésultat attendu : ${c.expect.map(fmt).join(' ou ')}\nPiste : vérifiez le cas limite et la valeur renvoyée par return.`,
         });
       }
     }
@@ -147,4 +151,13 @@ export async function runLevel(
 
 export function warmup() {
   ensureWorker();
+}
+
+/** Interrompt le worker actif et libère la promesse d’exécution en attente. */
+export function cancelRun() {
+  for (const [id, resolve] of pending) {
+    pending.delete(id);
+    resolve({ error: 'CANCELLED', cancelled: true });
+  }
+  killWorker();
 }

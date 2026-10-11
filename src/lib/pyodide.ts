@@ -71,6 +71,17 @@ function normalizeStdout(s: string): string {
   return s.replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n+$/,'').trim();
 }
 
+function stdoutMismatch(got: string, expected: string, visible: boolean): string {
+  const detail = `Sortie obtenue :\n${got || '(rien n\'a été affiché)'}\n\nSortie attendue :\n${visible ? expected : '(test caché)'}`;
+  if (!visible) return detail;
+  const limit = Math.min(got.length, expected.length);
+  let index = 0;
+  while (index < limit && got[index] === expected[index]) index++;
+  if (index < limit) return `${detail}\n\nPremière différence : caractère ${index + 1} — obtenu ${JSON.stringify(got[index])}, attendu ${JSON.stringify(expected[index])}.`;
+  if (got.length !== expected.length) return `${detail}\n\nPremière différence : la sortie contient ${got.length} caractère(s), l\'attendu en contient ${expected.length}.`;
+  return detail;
+}
+
 export interface TestOutcome {
   test: LevelTest;
   visible: boolean;
@@ -123,7 +134,7 @@ export async function runLevel(
         passed: ok,
         detail: ok
           ? ''
-          : `Sortie obtenue :\n${got || '(rien n\'a été affiché)'}\n\nSortie attendue :\n${t.visible ? t.test.expect[0] : '(test caché)'}`,
+          : stdoutMismatch(got, normalizeStdout(t.test.expect[0]), t.visible),
       });
     } else {
       const c = t.test;

@@ -24,9 +24,9 @@ export function Home({ progress, onOpen, onReset, onImport, syncMessage }: {
   return (
     <div className="curriculum-shell">
       <header className="curriculum-header">
-        <a className="curriculum-brand" href="#/" aria-label="PyWargame — curriculum Python">
-          <span className="brand-mark" aria-hidden="true">PW</span>
-          <span><strong>PyWargame</strong><small>Curriculum Python · MPSI</small></span>
+        <a className="curriculum-brand" href="#/" aria-label="Python v9 — parcours Python">
+          <span className="brand-mark" aria-hidden="true">Py</span>
+          <span><strong>Python v9</strong><small>Parcours Python</small></span>
         </a>
         <span className="connection-note"><CheckCircle2 size={14} aria-hidden="true" /> Succès ! Vous êtes connecté à votre parcours.</span>
       </header>
@@ -59,7 +59,7 @@ export function Home({ progress, onOpen, onReset, onImport, syncMessage }: {
             </div>
           </div>
         </details>
-        <footer className="home-footer"><span>PyWargame · Python pour la MPSI</span><span>Théorie, pratique et raisonnement</span></footer>
+        <footer className="home-footer"><span>Python v9 · Parcours interactif</span><span>Théorie, pratique et raisonnement</span></footer>
       </main>
     </div>
   );

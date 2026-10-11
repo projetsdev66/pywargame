@@ -22,13 +22,13 @@ export const intArr = (r: RNG, n: number, min: number, max: number) =>
   Array.from({ length: n }, () => ri(r, min, max));
 
 // Représentation Python d'une valeur JS (pour les énoncés et les corrections)
-export function py(v: any): string {
+export function py(v: unknown): string {
   if (typeof v === 'string') return `'${v.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
   if (Array.isArray(v)) return `[${v.map(py).join(', ')}]`;
   if (typeof v === 'boolean') return v ? 'True' : 'False';
   if (v === null) return 'None';
   if (v && typeof v === 'object')
-    return `{${Object.entries(v).map(([k, x]) => `${py(k)}: ${py(x)}`).join(', ')}}`;
+    return `{${Object.entries(v as Record<string, unknown>).map(([k, x]) => `${py(k)}: ${py(x)}`).join(', ')}}`;
   return String(v);
 }
 

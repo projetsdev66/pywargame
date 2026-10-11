@@ -95,8 +95,13 @@ export function loadProgress(): Progress {
 }
 
 export function saveProgress(p: Progress) {
-  localStorage.setItem(KEY, JSON.stringify(p));
-  localStorage.removeItem(LEGACY_KEY);
+  try {
+    localStorage.setItem(KEY, JSON.stringify(p));
+    localStorage.removeItem(LEGACY_KEY);
+  } catch {
+    // Certains navigateurs privés ou environnements intégrés refusent le stockage.
+    // L'exécution reste utilisable ; seule la persistance locale est indisponible.
+  }
 }
 
 export function markLevelSolved(progress: Progress, id: number): Progress {

@@ -374,7 +374,7 @@ const F5: FamSpec = {
     const L = intArr(r, 6, 1, 99);
     const mode = i % 5;
     const variants: {
-      txt: string; code: string; calc: (L: number[]) => any; hint: string;
+      txt: string; code: string; calc: (L: number[]) => unknown; hint: string;
     }[] = [
       { txt: 'le premier élément', code: 'L[0]', calc: (l) => l[0], hint: 'Le premier élément est à l\'indice 0, pas 1.' },
       { txt: 'le dernier élément', code: 'L[-1]', calc: (l) => l[l.length - 1], hint: 'L\'indice -1 désigne le dernier élément.' },
@@ -433,7 +433,7 @@ const F6: FamSpec = {
     const x = ri(r, 50, 99);
     const mode = i % 6;
     const variants: {
-      txt: string; code: string; calc: (l: number[]) => any; solExtra?: string;
+      txt: string; code: string; calc: (l: number[]) => unknown; solExtra?: string;
     }[] = [
       { txt: 'la liste triée par ordre croissant (sans modifier L)', code: 'sorted(L)', calc: (l) => [...l].sort((p, q) => p - q) },
       { txt: `la somme des éléments`, code: 'sum(L)', calc: (l) => l.reduce((a, b) => a + b, 0) },

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- l'API Pyodide est chargée dynamiquement dans le worker. */
 // Worker Pyodide : exécute le code de l'élève en isolation, avec capture de stdout
 // et appels de fonctions de test. Le thread principal impose un timeout (terminate).
 
@@ -46,21 +47,11 @@ self.onmessage = async (e: MessageEvent) => {
         const argsJs = c.args.map((a: any) => {
           if (typeof a === 'string' && a.startsWith('__LAMBDA__')) {
             const expr = a.slice('__LAMBDA__'.length);
-            const depth = (s: string) => {
-              let d = 0, found = false;
-              for (const ch of s) {
-                if (ch === '(' || ch === '[') d++;
-                if (ch === ')' || ch === ']') d--;
-                if (ch === ',' && d === 0) found = true;
-              }
-              return found;
-            };
             // Nom du paramètre adapté aux variables utilisées dans l'expression
             const usesY = /(^|[^a-zA-Z_])y([^a-zA-Z_]|$)/.test(expr);
             const usesT = /(^|[^a-zA-Z_])t([^a-zA-Z_]|$)/.test(expr);
             const sig = usesY || usesT ? 't, y' : 'x';
             const lam = pyodide.runPython(`lambda ${sig}: ${expr}`, { globals });
-            void depth;
             return lam;
           }
           return JSON.parse(JSON.stringify(a));
@@ -77,7 +68,7 @@ self.onmessage = async (e: MessageEvent) => {
         results.push({ ok: false, error: cleanError(String(callErr)) });
       }
     }
-    globals.destroy && globals.destroy();
+    if (globals.destroy) globals.destroy();
     (self as any).postMessage({ id, stdout: stdoutBuf.join('\n'), results });
   } catch (err: any) {
     (self as any).postMessage({ id, stdout: stdoutBuf.join('\n'), error: cleanError(String(err)) });

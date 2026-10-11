@@ -2,7 +2,21 @@ import type { LevelTest, RunResult } from '@/types/level';
 
 let worker: Worker | null = null;
 let msgId = 0;
-const pending = new Map<number, (r: any) => void>();
+interface RawCallResult {
+  ok: boolean;
+  got?: unknown;
+  error?: string;
+}
+
+interface RawRunResponse {
+  stdout?: string;
+  results?: RawCallResult[];
+  error?: string;
+  timedOut?: boolean;
+  cancelled?: boolean;
+}
+
+const pending = new Map<number, (r: RawRunResponse) => void>();
 
 function ensureWorker(): Worker {
   if (!worker) {
@@ -14,6 +28,14 @@ function ensureWorker(): Worker {
         pending.delete(id);
         cb(rest);
       }
+    };
+    worker.onerror = (event) => {
+      const message = event.message || 'Le moteur Python a rencontré une erreur inattendue.';
+      for (const [id, resolve] of pending) {
+        pending.delete(id);
+        resolve({ error: `WORKER: ${message}` });
+      }
+      killWorker();
     };
   }
   return worker;
@@ -30,7 +52,7 @@ const TIMEOUT_MS = 12000;
 // NumPy doit être téléchargé à la première utilisation : délai plus large.
 const TIMEOUT_NUMPY_MS = 90000;
 
-async function rawRun(code: string, calls: { fn: string; args: unknown[] }[], needNumpy: boolean): Promise<any> {
+async function rawRun(code: string, calls: { fn: string; args: unknown[] }[], needNumpy: boolean): Promise<RawRunResponse> {
   // Un worker neuf à chaque exécution : isolation totale entre les runs
   // (Pyodide et numpy restent en cache navigateur après le premier chargement).
   killWorker();
@@ -47,11 +69,17 @@ async function rawRun(code: string, calls: { fn: string; args: unknown[] }[], ne
       clearTimeout(timer);
       resolve(r);
     });
-    w.postMessage({ id, code, calls, needNumpy });
+    try {
+      w.postMessage({ id, code, calls, needNumpy });
+    } catch (error) {
+      clearTimeout(timer);
+      pending.delete(id);
+      resolve({ error: `POSTMESSAGE: ${String(error)}` });
+    }
   });
 }
 
-function deepEq(a: any, b: any, tol = 0): boolean {
+function deepEq(a: unknown, b: unknown, tol = 0): boolean {
   if (typeof a === 'number' && typeof b === 'number') {
     if (tol > 0) return Math.abs(a - b) <= tol * Math.max(1, Math.abs(b));
     return a === b || Math.abs(a - b) < 1e-12;
@@ -60,9 +88,11 @@ function deepEq(a: any, b: any, tol = 0): boolean {
     return a.length === b.length && a.every((v, i) => deepEq(v, b[i], tol));
   }
   if (a && b && typeof a === 'object' && typeof b === 'object') {
-    const ka = Object.keys(a);
-    const kb = Object.keys(b);
-    return ka.length === kb.length && ka.every((k) => deepEq(a[k], (b as any)[k], tol));
+    const aa = a as Record<string, unknown>;
+    const bb = b as Record<string, unknown>;
+    const ka = Object.keys(aa);
+    const kb = Object.keys(bb);
+    return ka.length === kb.length && ka.every((k) => deepEq(aa[k], bb[k], tol));
   }
   return a === b;
 }
@@ -78,7 +108,7 @@ function stdoutMismatch(got: string, expected: string, visible: boolean): string
   let index = 0;
   while (index < limit && got[index] === expected[index]) index++;
   if (index < limit) return `${detail}\n\nPremière différence : caractère ${index + 1} — obtenu ${JSON.stringify(got[index])}, attendu ${JSON.stringify(expected[index])}.`;
-  if (got.length !== expected.length) return `${detail}\n\nPremière différence : la sortie contient ${got.length} caractère(s), l\'attendu en contient ${expected.length}.`;
+  if (got.length !== expected.length) return `${detail}\n\nPremière différence : la sortie contient ${got.length} caractère(s), l'attendu en contient ${expected.length}.`;
   return detail;
 }
 
@@ -145,7 +175,7 @@ export async function runLevel(
         outcomes.push({ ...t, passed: false, detail: res.error || 'Erreur lors de l\'appel.' });
       } else {
         const ok = c.expect.some((e) => deepEq(res.got, e, c.tol || 0));
-        const fmt = (v: any) => JSON.stringify(v);
+        const fmt = (v: unknown) => JSON.stringify(v);
         outcomes.push({
           ...t,
           passed: ok,

@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 import { ArrowRight, CheckCircle2, Download, RotateCcw, Upload } from 'lucide-react';
 import { LevelCatalog } from '@/components/LevelCatalog';
-import { LEVELS, PHASE_NAMES, TOTAL } from '@/levels';
+import { LEVELS, TOTAL } from '@/levels';
+import { CURRICULUM } from '@/lib/curriculum';
 import { exportProgress, importProgress, type Progress } from '@/lib/progress';
 
 export function Home({ progress, onOpen, onReset, onImport, syncMessage }: {
@@ -18,6 +19,7 @@ export function Home({ progress, onOpen, onReset, onImport, syncMessage }: {
   const nextLevel = LEVELS.find((level) => !progress.done.includes(level.id));
   const doneCount = progress.done.length;
   const percent = Math.round((doneCount / TOTAL) * 100);
+  const CURRICULUM_MODULE_COUNT = CURRICULUM.modules.length;
 
   return (
     <div className="curriculum-shell">
@@ -32,21 +34,17 @@ export function Home({ progress, onOpen, onReset, onImport, syncMessage }: {
       <main className="curriculum-main">
         {syncMessage && <aside className="sync-notice" role="status"><strong>Progression synchronisée</strong><span>{syncMessage}</span></aside>}
         <section className="curriculum-intro" aria-labelledby="curriculum-title">
-          <p className="curriculum-kicker">Votre parcours d’apprentissage</p>
-          <h1 id="curriculum-title">Python, étape par étape.</h1>
-          <p>Choisissez une leçon pour ouvrir ses exercices. Chaque étape se lance dans le navigateur et votre progression est enregistrée localement.</p>
-          <div className="curriculum-summary"><span>{Object.keys(PHASE_NAMES).length} modules</span><span>{TOTAL} étapes</span><span>{doneCount} achevées</span><span>{percent} %</span></div>
+          <p className="curriculum-kicker">Parcours Python</p>
+          <h1 id="curriculum-title">Python</h1>
+          {nextLevel && <button className="start-learning" type="button" onClick={() => onOpen(nextLevel.id)}>Commencer à apprendre <ArrowRight size={16} aria-hidden="true" /></button>}
+          <p>Ce cours vous apprend les fondamentaux de Python à travers des leçons, des ateliers et des exercices interactifs.</p>
+          <div className="curriculum-summary"><span>{CURRICULUM_MODULE_COUNT} cours</span><span>{TOTAL} étapes</span><span>{doneCount} achevées</span><span>{percent} %</span></div>
         </section>
 
-        {nextLevel && <section className="resume-card" aria-labelledby="resume-title">
-          <div><span className="resume-label">À poursuivre</span><h2 id="resume-title">{nextLevel.title}</h2><p>{nextLevel.phaseName} · {nextLevel.topic} · Étape {nextLevel.id}</p></div>
-          <button className="resume-action" type="button" onClick={() => onOpen(nextLevel.id)}>Continuer <ArrowRight size={16} aria-hidden="true" /></button>
-        </section>}
 
         <section className="curriculum-section" aria-labelledby="modules-title">
           <h2 id="modules-title" className="courses-title">Cours</h2>
           <label className="course-search" htmlFor="curriculum-search"><Search size={16} aria-hidden="true" /><input id="curriculum-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Rechercher une leçon dans le parcours" /></label>
-          <div className="section-heading"><span>Parcours Python</span><span>{doneCount} sur {TOTAL} étapes achevées</span></div>
           <LevelCatalog progress={progress} activeLevelId={nextLevel?.id} onOpen={onOpen} query={query} />
         </section>
 

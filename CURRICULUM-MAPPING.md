@@ -1,49 +1,52 @@
-# Refonte du curriculum PyWargame
+# Curriculum Python v9 intégré à PyWargame
 
-## Mapping des phases vers les modules
+La page d’accueil suit désormais l’organisation du curriculum Python v9 de freeCodeCamp, sans certification :
 
-| Ancienne structure | Nouveau module | Sous-parties affichées | Type dominant |
-| --- | --- | --- | --- |
-| Phase 1 — Les bases de Python (270 niveaux) | **Bases de Python** | Une leçon par famille : variables, opérateurs, conversions, affichage, listes, boucles, conditions, chaînes, fonctions, dictionnaires/tuples et synthèse | Théorie / Atelier |
-| Phase 2 — Algorithmique (120 niveaux) | **Algorithmique** | Accumulateurs, recherche, tri, dichotomie, récursivité, piles/files, compréhensions et boucles imbriquées | Atelier / Laboratoire |
-| Phase 3 — Calcul scientifique (100 niveaux) | **Calcul scientifique** | Bases NumPy, masques, suites, intégration, recherche de zéros, Euler et courbes | Théorie / Laboratoire |
-| Phase 4 — Synthèse type DS MPSI (40 niveaux) | **Problèmes de synthèse MPSI** | Familles de problèmes transversaux, organisées en séances de défis progressifs | Critique / Atelier |
-| Phase 5 — Compléments Python pour la MPSI (20 niveaux) | **Compléments Python pour la MPSI** | Modules et expressions régulières, programmation objet, générateurs et outils complémentaires | Quiz / Théorie |
-
-Les familles existantes restent la source de vérité pédagogique. Chaque niveau généré est conservé comme une **étape** et son identifiant reste inchangé : les liens directs, les codes sauvegardés et la progression locale ne sont donc pas cassés.
-
-## Structure de données utilisée
-
-```ts
-Module = {
-  phase: number,
-  title: string,
-  lessons: Lesson[]
-}
-
-Lesson = {
-  key: string,
-  title: string,       // topic existant
-  kind: 'Théorie' | 'Atelier' | 'Laboratoire' | 'Critique' | 'Quiz',
-  steps: Level[]       // niveaux existants, affichés sous forme de pastilles
-}
+```text
+Python
+├── Python Basics
+│   ├── Introduction to Python — Théorie
+│   ├── Understanding Variables and Data Types — Théorie
+│   ├── Build a Report Card Printer — Atelier
+│   ├── Introduction to Strings — Théorie
+│   ├── Build an Employee Profile Generator — Atelier
+│   ├── Build an Employee Profile Validator — Atelier
+│   ├── Numbers and Mathematical Operations — Théorie
+│   ├── Build a Bill Splitter — Atelier
+│   ├── Booleans and Conditionals — Théorie
+│   ├── Build a Movie Ticket Booking Calculator — Atelier
+│   ├── Build a Travel Weather Planner — Laboratoire
+│   ├── Understanding Functions and Scope — Théorie
+│   ├── Build a Kitchen Inventory Tracker — Atelier
+│   ├── Build an Apply Discount Function — Laboratoire
+│   ├── Build a Caesar Cipher — Atelier
+│   ├── Build an RPG Character — Laboratoire
+│   ├── Python Basics Review — Révision
+│   └── Python Basics Quiz — Quiz
+├── Install Python
+├── Loops and Sequences
+├── Dictionaries and Sets
+├── Error Handling
+├── Classes and Objects
+├── Object-Oriented Programming (OOP)
+├── Linear Data Structures
+├── Recursion
+├── Algorithms
+├── Graphs and Trees
+├── Dynamic Programming
+└── Python Review
 ```
 
-Cette structure est dérivée de `LEVELS` et `PHASE_NAMES` au rendu : aucune duplication des 540 niveaux n’est introduite. Les compteurs sont recalculés à partir de `progress.done`, donc ils restent synchronisés en temps réel.
+Les autres cours contiennent leurs leçons et projets pédagogiques correspondants, avec les mêmes intitulés et les mêmes types de contenu que la page de référence : **Théorie**, **Atelier**, **Laboratoire**, **Révision** et **Quiz**.
 
-## Comportement
+Les éléments explicitement liés à la certification — projets de certification et examen final — ne sont pas affichés.
 
-- Un clic sur un module ouvre ou ferme sa liste de leçons.
-- Un clic sur une leçon ouvre ou ferme ses étapes.
-- Une pastille correspond à un niveau existant et ouvre l’exercice dans la page actuelle.
-- Le premier niveau non terminé de chaque leçon est marqué comme **À poursuivre** ; le prochain niveau global est automatiquement mis en évidence.
-- Les niveaux verrouillés respectent la règle de progression existante (`id - 1` terminé).
-- La progression, l’import/export JSON et la navigation par hash sont conservés.
-- Aucun élément de certification, examen final ou parcours de certification n’est ajouté.
+## Fonctionnement dans PyWargame
 
-## Composants React
-
-- `Home` : en-tête discret, message de synchronisation, résumé de progression et outils de sauvegarde.
-- `LevelCatalog` : modules repliables, leçons typées, compteurs et étapes numérotées.
-- `LevelPage` : inchangée fonctionnellement ; elle reste la destination des exercices.
-- `progress.ts` : inchangé ; il continue de gérer la persistance et la resynchronisation par signature.
+- `src/lib/curriculum.ts` contient le modèle de cours, modules, leçons, types et étapes.
+- Les 550 exercices Python déjà présents servent de contenu exécutable local derrière les leçons du curriculum.
+- Une leçon s’ouvre pour afficher ses étapes numérotées ; chaque étape ouvre l’exercice correspondant.
+- Les états sont calculés avec la progression réelle : `Pas commencé`, `À poursuivre`, `Terminé` et `Verrouillé`.
+- Les compteurs de modules et du cours racine se mettent à jour automatiquement.
+- La recherche filtre les leçons comme dans le curriculum freeCodeCamp.
+- Les données de progression et les liens `#/niveau/:id` restent compatibles avec l’application existante.

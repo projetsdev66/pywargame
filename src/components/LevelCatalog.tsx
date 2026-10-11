@@ -1,104 +1,63 @@
 import { useState } from 'react';
-import { Check, ChevronDown, Circle, Lock } from 'lucide-react';
-import { LEVELS, PHASE_NAMES } from '@/levels';
+import { Check, ChevronDown, ChevronRight, Circle, Lock, Terminal } from 'lucide-react';
+import { CURRICULUM, type CurriculumLesson, type CurriculumModule } from '@/lib/curriculum';
 import { isUnlocked, type Progress } from '@/lib/progress';
-import type { Level } from '@/types/level';
 
-const PHASES = Object.keys(PHASE_NAMES).map(Number);
-type LessonKind = 'Théorie' | 'Atelier' | 'Laboratoire' | 'Critique' | 'Quiz';
+function slug(value: string) { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'); }
+function matches(lesson: CurriculumLesson, query: string) { const q = query.trim().toLowerCase(); return !q || lesson.title.toLowerCase().includes(q); }
 
-function kindFor(level: Level, phase: number, index: number): LessonKind {
-  const title = `${level.title} ${level.topic}`.toLowerCase();
-  if (phase === 4 || title.includes('synthèse')) return 'Critique';
-  if (phase === 5 && (index % 4 === 0 || title.includes('quiz'))) return 'Quiz';
-  if (phase === 3) return title.includes('numpy') || title.includes('courbe') ? 'Laboratoire' : 'Théorie';
-  if (phase === 2) return index % 4 === 0 ? 'Théorie' : 'Laboratoire';
-  return index % 5 === 0 ? 'Théorie' : 'Atelier';
-}
+function CourseModule({ module, progress, activeLevelId, onOpen, query }: { module: CurriculumModule; progress: Progress; activeLevelId?: number; onOpen: (id: number) => void; query: string }) {
+  const [open, setOpen] = useState(() => module.title === 'Python Basics');
+  const [openLessons, setOpenLessons] = useState<string[]>([]);
+  const lessons = module.lessons.filter((lesson) => matches(lesson, query));
+  const done = module.lessons.flatMap((lesson) => lesson.steps).filter((level) => progress.done.includes(level.id)).length;
+  const toggleLesson = (title: string) => setOpenLessons((items) => items.includes(title) ? items.filter((item) => item !== title) : [...items, title]);
 
-function slug(value: string) {
-  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
-}
-
-function topicGroups(phase: number, query: string) {
-  const normalizedQuery = query.trim().toLowerCase();
-  const levels = LEVELS.filter((level) => level.phase === phase);
-  const topics = [...new Set(levels.map((level) => level.topic))];
-  return topics.map((topic, topicIndex) => ({
-    key: `${phase}:${topic}`,
-    title: topic,
-    levels: levels.filter((level) => level.topic === topic),
-    topicIndex,
-  })).map((group) => ({
-    ...group,
-    levels: group.levels.filter((level, index) => !normalizedQuery || `${level.title} ${level.topic}`.toLowerCase().includes(normalizedQuery) || group.title.toLowerCase().includes(normalizedQuery) || index === 0),
-  })).filter((group) => group.levels.length > 0);
-}
-
-interface LevelCatalogProps {
-  progress: Progress;
-  activeLevelId?: number;
-  onOpen: (id: number) => void;
-  query?: string;
-}
-
-export function LevelCatalog({ progress, activeLevelId, onOpen, query = '' }: LevelCatalogProps) {
-  const activeLevel = LEVELS.find((level) => level.id === activeLevelId);
-  const [openModules, setOpenModules] = useState<number[]>(() => [activeLevel?.phase ?? 1]);
-  const [openTopics, setOpenTopics] = useState<string[]>(() => activeLevel ? [`${activeLevel.phase}:${activeLevel.topic}`] : []);
-  const toggle = <T,>(items: T[], item: T) => items.includes(item) ? items.filter((value) => value !== item) : [...items, item];
-
-  return (
-    <div className="curriculum-list">
-      {PHASES.map((phase) => {
-        const phaseLevels = LEVELS.filter((level) => level.phase === phase);
-        const done = phaseLevels.filter((level) => progress.done.includes(level.id)).length;
-        const moduleOpen = openModules.includes(phase);
-        const groups = topicGroups(phase, query);
-        const moduleId = `module-${phase}`;
-        return (
-          <section className="curriculum-module" key={phase}>
-            <button className="module-row" type="button" aria-expanded={moduleOpen} aria-controls={moduleId} onClick={() => setOpenModules((items) => toggle(items, phase))}>
-              <ChevronDown className={`module-chevron ${moduleOpen ? 'is-open' : ''}`} size={18} aria-hidden="true" />
-              <Circle className="module-radio" size={17} aria-hidden="true" />
-              <span className="module-title">{PHASE_NAMES[phase]}</span>
-              <span className="module-count">{done} sur {phaseLevels.length} étapes achevées</span>
-            </button>
-            {moduleOpen && <div className="module-lessons" id={moduleId}>
-              {groups.map((group) => {
-                const topicDone = group.levels.filter((level) => progress.done.includes(level.id)).length;
-                const topicOpen = openTopics.includes(group.key);
-                const topicId = `topic-${slug(group.key)}`;
-                return (
-                  <section className="curriculum-topic" key={group.key}>
-                    <button className="topic-row" type="button" aria-expanded={topicOpen} aria-controls={topicId} onClick={() => setOpenTopics((items) => toggle(items, group.key))}>
-                      <ChevronDown className={`lesson-chevron ${topicOpen ? 'is-open' : ''}`} size={15} aria-hidden="true" />
-                      <span className="lesson-radio" aria-hidden="true" />
-                      <span className="lesson-title">{group.title}</span>
-                      <span className="lesson-count">{topicDone}/{group.levels.length}</span>
-                    </button>
-                    {topicOpen && <div className="level-list" id={topicId}>
-                      {group.levels.map((level, index) => {
-                        const completed = progress.done.includes(level.id);
-                        const unlocked = isUnlocked(progress.done, level.id);
-                        const current = level.id === activeLevelId && !completed;
-                        const kind = kindFor(level, phase, group.topicIndex + index);
-                        return (
-                          <button className="level-row" data-state={completed ? 'done' : current ? 'current' : unlocked ? 'open' : 'locked'} key={level.id} type="button" disabled={!unlocked} aria-current={current ? 'step' : undefined} onClick={() => onOpen(level.id)}>
-                            <span className="level-radio" aria-hidden="true">{completed ? <Check size={12} /> : !unlocked ? <Lock size={11} /> : <Circle size={12} />}</span>
-                            <span className="level-row-copy"><span className="level-row-title">{level.title}</span><span className="level-row-meta">Niveau {level.id} · {completed ? 'Terminé' : current ? 'À poursuivre' : unlocked ? 'Pas commencé' : 'Verrouillé'}</span></span>
-                            <span className={`lesson-kind kind-${slug(kind)}`}>{kind}</span>
-                          </button>
-                        );
-                      })}
-                    </div>}
-                  </section>
-                );
-              })}
-            </div>}
-          </section>
-        );
+  return <section className="curriculum-module fcc-course-module">
+    <button className="module-row" type="button" aria-expanded={open} aria-controls={`course-${slug(module.title)}`} onClick={() => setOpen((value) => !value)}>
+      <ChevronDown className={`module-chevron ${open ? 'is-open' : ''}`} size={18} aria-hidden="true" />
+      <Circle className="module-radio" size={17} aria-hidden="true" />
+      <span className="module-title">{module.title}</span>
+      <span className="module-count">{done} sur {module.totalSteps} étapes achevées</span>
+    </button>
+    {open && <div className="module-lessons fcc-lesson-list" id={`course-${slug(module.title)}`}>
+      {lessons.map((lesson) => {
+        const lessonOpen = openLessons.includes(lesson.title);
+        const lessonDone = lesson.steps.filter((level) => progress.done.includes(level.id)).length;
+        const currentStep = lesson.steps.find((level) => !progress.done.includes(level.id));
+        return <div className="fcc-lesson" key={`${module.title}-${lesson.title}`}>
+          <button className="fcc-lesson-row" type="button" aria-expanded={lessonOpen} onClick={() => toggleLesson(lesson.title)}>
+            <ChevronRight className={`fcc-lesson-chevron ${lessonOpen ? 'is-open' : ''}`} size={15} aria-hidden="true" />
+            <span className={`lesson-radio ${currentStep?.id === activeLevelId ? 'is-current' : ''}`} aria-hidden="true" />
+            <span className="fcc-lesson-title">{lesson.title}</span>
+            <span className="fcc-lesson-status">{lessonDone === lesson.steps.length ? 'Terminé' : currentStep?.id === activeLevelId ? 'À poursuivre' : 'Pas commencé'}</span>
+            <span className={`lesson-kind kind-${slug(lesson.kind)}`}>{lesson.kind}</span>
+          </button>
+          {lessonOpen && <div className="fcc-step-list" aria-label={`Étapes de ${lesson.title}`}>
+            {lesson.steps.map((level, index) => {
+              const completed = progress.done.includes(level.id);
+              const unlocked = isUnlocked(progress.done, level.id);
+              const current = level.id === activeLevelId && !completed;
+              return <button className="fcc-step" data-state={completed ? 'done' : current ? 'current' : unlocked ? 'open' : 'locked'} key={level.id} type="button" disabled={!unlocked} aria-current={current ? 'step' : undefined} onClick={() => onOpen(level.id)} title={level.title}>
+                {completed ? <Check size={12} aria-hidden="true" /> : !unlocked ? <Lock size={11} aria-hidden="true" /> : index + 1}
+              </button>;
+            })}
+          </div>}
+        </div>;
       })}
-    </div>
-  );
+    </div>}
+  </section>;
+}
+
+export function LevelCatalog({ progress, activeLevelId, onOpen, query = '' }: { progress: Progress; activeLevelId?: number; onOpen: (id: number) => void; query?: string }) {
+  const [courseOpen, setCourseOpen] = useState(true);
+  return <div className="curriculum-list">
+    <button className="course-row" type="button" aria-expanded={courseOpen} aria-controls="python-course" onClick={() => setCourseOpen((value) => !value)}>
+      <ChevronDown className={`module-chevron ${courseOpen ? 'is-open' : ''}`} size={18} aria-hidden="true" />
+      <span className="course-icon" aria-hidden="true"><Terminal size={17} /></span>
+      <span className="module-title">{CURRICULUM.title}</span>
+      <span className="module-count">{progress.done.length} sur {CURRICULUM.totalSteps} étapes achevées</span>
+    </button>
+    {courseOpen && <div id="python-course" className="course-modules">{CURRICULUM.modules.map((module) => <CourseModule key={module.title} module={module} progress={progress} activeLevelId={activeLevelId} onOpen={onOpen} query={query} />)}</div>}
+  </div>;
 }

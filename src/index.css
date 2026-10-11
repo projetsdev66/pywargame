@@ -1880,3 +1880,22 @@ button:disabled {
 .level-row-meta { color: #89928d; font-size: 10px; }
 .level-row .lesson-kind { margin-left: 8px; }
 @media (max-width: 640px) { .level-list { padding-left: 9px; }.level-row { padding-inline: 6px; }.level-row .lesson-kind { display: none; }.level-row-title { white-space: normal; } }
+/* Structure de cours racine : Python > modules > thèmes > leçons */
+.course-row { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 0; border-bottom: 1px solid #b9c1bc; background: #fff; text-align: left; cursor: pointer; }
+.course-row:hover { background: #f0f2f0; }
+.course-icon { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: #111827; color: #fff; }
+.course-modules { background: #fff; }
+.course-modules > .curriculum-module { margin-left: 20px; border-left: 1px solid #dfe3e1; }
+@media (max-width: 640px) { .course-modules > .curriculum-module { margin-left: 8px; } }
+/* Leçons et étapes : structure de contenu freeCodeCamp v9 */
+.start-learning { display: inline-flex; align-items: center; gap: 8px; margin: 18px 0 2px; padding: 10px 18px; border: 1px solid #111827; background: #f5c542; color: #111827; cursor: pointer; font-weight: 700; }
+.fcc-lesson { border-top: 1px solid #eceeec; }
+.fcc-lesson-row { width: 100%; min-height: 45px; display: flex; align-items: center; gap: 9px; padding: 9px 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.fcc-lesson-row:hover { background: #f0f2f0; }
+.fcc-lesson-chevron { flex: 0 0 auto; transition: transform .16s ease; }.fcc-lesson-chevron.is-open { transform: rotate(90deg); }
+.fcc-lesson-title { min-width: 0; flex: 1; color: #35414a; font-size: 13px; }
+.fcc-lesson-status { color: #7b8580; font-size: 11px; white-space: nowrap; }
+.fcc-step-list { display: flex; flex-wrap: wrap; gap: 7px; padding: 4px 0 13px 40px; }
+.fcc-step { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid #cbd2ce; border-radius: 50%; background: #f1f3f1; color: #68747b; cursor: pointer; font-size: 11px; }
+.fcc-step[data-state="current"], .fcc-step:hover:not(:disabled) { border-color: #237a57; background: #237a57; color: #fff; }.fcc-step[data-state="done"] { border-color: #9dccb4; background: #e3f2e9; color: #237a57; }.fcc-step:disabled { cursor: not-allowed; opacity: .5; }
+@media (max-width: 640px) { .fcc-lesson-status { display: none; }.fcc-lesson-row { padding-right: 6px; }.fcc-step-list { padding-left: 28px; } }

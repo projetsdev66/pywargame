@@ -1,162 +1,106 @@
 import { useState } from 'react';
-import { Check, ChevronDown, Lock } from 'lucide-react';
+import { Check, ChevronDown, Circle, Lock } from 'lucide-react';
 import { LEVELS, PHASE_NAMES } from '@/levels';
 import { isUnlocked, type Progress } from '@/lib/progress';
-import { groupIntoSessions } from '@/lib/catalog';
+import type { Level } from '@/types/level';
 
 const PHASES = Object.keys(PHASE_NAMES).map(Number);
+type LessonKind = 'Théorie' | 'Atelier' | 'Laboratoire' | 'Critique' | 'Quiz';
 
-function toggleItem<T>(items: T[], item: T): T[] {
-  return items.includes(item) ? items.filter((current) => current !== item) : [...items, item];
+function kindFor(level: Level, phase: number, index: number): LessonKind {
+  if (phase === 4) return index % 3 === 0 ? 'Critique' : 'Atelier';
+  if (phase === 5) return index % 3 === 0 ? 'Quiz' : 'Théorie';
+  if (phase === 3) return index % 2 === 0 ? 'Théorie' : 'Laboratoire';
+  if (phase === 2) return index % 3 === 0 ? 'Théorie' : 'Laboratoire';
+  return level.title.toLowerCase().includes('synthèse') ? 'Critique' : index % 3 === 0 ? 'Théorie' : 'Atelier';
 }
 
-function phaseLabel(phase: number): string {
-  return `phase-${phase}`;
+function slug(value: string) {
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
+}
+
+function lessonGroups(phase: number) {
+  const levels = LEVELS.filter((level) => level.phase === phase);
+  const topics = [...new Set(levels.map((level) => level.topic))];
+  return topics.map((topic, index) => ({
+    key: `${phase}:${topic}`,
+    title: topic,
+    kind: kindFor(levels.find((level) => level.topic === topic)!, phase, index),
+    steps: levels.filter((level) => level.topic === topic),
+  }));
 }
 
 interface LevelCatalogProps {
   progress: Progress;
   activeLevelId?: number;
   onOpen: (id: number) => void;
+  query?: string;
 }
 
-export function LevelCatalog({ progress, activeLevelId, onOpen }: LevelCatalogProps) {
-  const activeLevel = activeLevelId === undefined
-    ? undefined
-    : LEVELS.find((level) => level.id === activeLevelId);
-  const activePhase = activeLevel?.phase ?? null;
-  const activeFamilyKey = activeLevel ? `${activeLevel.phase}:${activeLevel.topic}` : null;
-  const [openPhases, setOpenPhases] = useState<number[]>(() => [activePhase ?? 1]);
-  const [openFamilies, setOpenFamilies] = useState<string[]>(() =>
-    activeFamilyKey ? [activeFamilyKey] : [],
-  );
+export function LevelCatalog({ progress, activeLevelId, onOpen, query = '' }: LevelCatalogProps) {
+  const activeLevel = LEVELS.find((level) => level.id === activeLevelId);
+  const [openModules, setOpenModules] = useState<number[]>(() => [activeLevel?.phase ?? 1]);
+  const [openLessons, setOpenLessons] = useState<string[]>(() => activeLevel ? [`${activeLevel.phase}:${activeLevel.topic}`] : []);
+  const normalizedQuery = query.trim().toLowerCase();
+  const toggle = <T,>(items: T[], item: T) => items.includes(item) ? items.filter((value) => value !== item) : [...items, item];
 
   return (
-    <div className="phase-catalog">
+    <div className="curriculum-list">
       {PHASES.map((phase) => {
         const phaseLevels = LEVELS.filter((level) => level.phase === phase);
-        const phaseDone = phaseLevels.filter((level) => progress.done.includes(level.id)).length;
-        const phasePercent = phaseLevels.length === 0
-          ? 0
-          : Math.round((phaseDone / phaseLevels.length) * 100);
-        const phaseExpanded = openPhases.includes(phase);
-        const topics = [...new Set(phaseLevels.map((level) => level.topic))];
-        const panelId = `${phaseLabel(phase)}-families`;
-
+        const done = phaseLevels.filter((level) => progress.done.includes(level.id)).length;
+        const open = openModules.includes(phase);
+        const moduleId = `module-${phase}`;
+        const lessons = lessonGroups(phase).filter((lesson) => !normalizedQuery || `${lesson.title} ${lesson.steps.map((step) => step.title).join(' ')}`.toLowerCase().includes(normalizedQuery));
         return (
-          <section className="phase-section" data-phase={phase} key={phase}>
-            <button
-              className="phase-toggle"
-              type="button"
-              aria-expanded={phaseExpanded}
-              aria-controls={panelId}
-              onClick={() => setOpenPhases((current) => toggleItem(current, phase))}
-            >
-              <span className="phase-number">0{phase}</span>
-              <span className="phase-heading">
-                <span className="phase-name">{PHASE_NAMES[phase]}</span>
-                <span className="phase-count">{phaseLevels.length} défis · {topics.length} familles</span>
-              </span>
-              <span className="phase-stat">
-                <span>{phaseDone} / {phaseLevels.length} réussis</span>
-                <span className="phase-meter" aria-hidden="true">
-                  <span style={{ width: `${phasePercent}%` }} />
-                </span>
-              </span>
-              <ChevronDown className="disclosure-icon" size={18} aria-hidden="true" />
+          <section className="curriculum-module" key={phase}>
+            <button className="module-row" type="button" aria-expanded={open} aria-controls={moduleId} onClick={() => setOpenModules((items) => toggle(items, phase))}>
+              <ChevronDown className={`module-chevron ${open ? 'is-open' : ''}`} size={18} aria-hidden="true" />
+              <Circle className="module-radio" size={17} aria-hidden="true" />
+              <span className="module-title">{PHASE_NAMES[phase]}</span>
+              <span className="module-count">{done} sur {phaseLevels.length} étapes achevées</span>
             </button>
-
-            {phaseExpanded && (
-              <div className="phase-families" id={panelId}>
-                {topics.map((topic, familyIndex) => {
-                  const familyLevels = phaseLevels.filter((level) => level.topic === topic);
-                  const sessions = groupIntoSessions(familyLevels);
-                  const familyDone = familyLevels.filter((level) => progress.done.includes(level.id)).length;
-                  const familyKey = `${phase}:${topic}`;
-                  const familyExpanded = openFamilies.includes(familyKey);
-                  const familyPanelId = `${phaseLabel(phase)}-family-${familyIndex + 1}`;
-                  const familyNext = familyLevels.find((level) => !progress.done.includes(level.id));
-
-                  return (
-                    <section className="family-section" data-phase={phase} key={familyKey}>
-                      <button
-                        className="family-toggle"
-                        type="button"
-                        aria-expanded={familyExpanded}
-                        aria-controls={familyPanelId}
-                        onClick={() => setOpenFamilies((current) => toggleItem(current, familyKey))}
-                      >
-                        <span className="family-index">{String(familyIndex + 1).padStart(2, '0')}</span>
-                        <span className="family-heading">
-                          <span className="family-name">{topic}</span>
-                          <span className="family-detail">
-                            {familyLevels.length} défis · {sessions.length} séances
-                            {familyNext && activeLevelId === familyNext.id ? ` · à reprendre : ${familyNext.title}` : ''}
-                          </span>
-                        </span>
-                        <span className="family-progress">{familyDone}/{familyLevels.length}</span>
-                        <ChevronDown className="disclosure-icon" size={16} aria-hidden="true" />
-                      </button>
-
-                      {familyExpanded && (
-                        <div className="family-sessions" id={familyPanelId}>
-                          {sessions.map((session) => {
-                            const sessionDone = session.levels.filter((level) => progress.done.includes(level.id)).length;
-                            const sessionId = `${familyPanelId}-session-${session.number}`;
-
-                            return (
-                              <section className="session-section" aria-labelledby={`${sessionId}-title`} key={session.number}>
-                                <header className="session-heading">
-                                  <div>
-                                    <h4 id={`${sessionId}-title`}>Séance {String(session.number).padStart(2, '0')}</h4>
-                                    <p>Défis {session.start}–{session.end}</p>
-                                  </div>
-                                  <span>{sessionDone}/{session.levels.length} réussis</span>
-                                </header>
-                                <ul className="session-levels">
-                                  {session.levels.map((level) => {
-                                    const completed = progress.done.includes(level.id);
-                                    const unlocked = isUnlocked(progress.done, level.id);
-                                    const current = level.id === activeLevelId && !completed;
-                                    const state = completed ? 'done' : current ? 'current' : unlocked ? 'open' : 'locked';
-                                    const stateLabel = completed ? 'réussi' : current ? 'à reprendre' : unlocked ? 'disponible' : 'verrouillé';
-
-                                    return (
-                                      <li key={level.id}>
-                                        <button
-                                          className="level-node"
-                                          data-state={state}
-                                          type="button"
-                                          disabled={!unlocked}
-                                          aria-current={current ? 'step' : undefined}
-                                          aria-label={`Niveau ${level.id} : ${level.title}, ${stateLabel}`}
-                                          title={`Niveau ${level.id} — ${level.title}`}
-                                          onClick={() => onOpen(level.id)}
-                                        >
-                                          <span className="level-node-number">{level.id}</span>
-                                          <span className="level-node-title">
-                                            {level.title}
-                                            <small className="level-node-meta">Difficulté {level.difficulty ?? 1}/5 · {level.estimatedMinutes ?? 8} min</small>
-                                          </span>
-                                          <span className="level-node-state">
-                                            {completed ? <Check size={14} aria-hidden="true" /> : !unlocked ? <Lock size={13} aria-hidden="true" /> : null}
-                                            <span>{stateLabel}</span>
-                                          </span>
-                                        </button>
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              </section>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </section>
-                  );
-                })}
-              </div>
-            )}
+            {open && <div className="module-lessons" id={moduleId}>
+              {lessons.map((lesson) => {
+                const lessonDone = lesson.steps.filter((level) => progress.done.includes(level.id)).length;
+                const lessonOpen = openLessons.includes(lesson.key);
+                const lessonId = `lesson-${slug(lesson.key)}`;
+                const next = lesson.steps.find((level) => !progress.done.includes(level.id));
+                return (
+                  <div className="curriculum-lesson" key={lesson.key}>
+                    <button className="lesson-row" type="button" aria-expanded={lessonOpen} aria-controls={lessonId} onClick={() => setOpenLessons((items) => toggle(items, lesson.key))}>
+                      <ChevronDown className={`lesson-chevron ${lessonOpen ? 'is-open' : ''}`} size={15} aria-hidden="true" />
+                      <span className={`lesson-radio ${next?.id === activeLevelId ? 'is-current' : ''}`} aria-hidden="true" />
+                      <span className="lesson-title">{lesson.title}</span>
+                      <span className={`lesson-kind kind-${slug(lesson.kind)}`}>{lesson.kind}</span>
+                      <span className="lesson-count">{lessonDone}/{lesson.steps.length}</span>
+                    </button>
+                    {lessonOpen && <div className="step-strip" id={lessonId} aria-label={`Étapes de ${lesson.title}`}>
+                      {lesson.steps.map((level, stepIndex) => {
+                        const completed = progress.done.includes(level.id);
+                        const unlocked = isUnlocked(progress.done, level.id);
+                        const current = level.id === activeLevelId && !completed;
+                        return (
+                          <button
+                            key={level.id}
+                            className="step-pill"
+                            data-state={completed ? 'done' : current ? 'current' : unlocked ? 'open' : 'locked'}
+                            type="button"
+                            disabled={!unlocked}
+                            aria-current={current ? 'step' : undefined}
+                            aria-label={`Étape ${stepIndex + 1} : ${level.title}`}
+                            title={level.title}
+                            onClick={() => onOpen(level.id)}
+                          >
+                            {completed ? <Check size={12} aria-hidden="true" /> : !unlocked ? <Lock size={11} aria-hidden="true" /> : stepIndex + 1}
+                          </button>
+                        );
+                      })}
+                    </div>}
+                  </div>
+                );
+              })}
+            </div>}
           </section>
         );
       })}

@@ -24,6 +24,20 @@ fs.writeFileSync(path.join(tmp, 'tsconfig.json'), JSON.stringify({
 }));
 spawnSync('npx', ['tsc', '-p', tmp], { stdio: 'inherit' });
 const { LEVELS, NUMPY_LEVELS } = await import(pathToFileURL(path.join(tmp, 'out/levels/index.js')).href);
+const ids = LEVELS.map((level) => level.id);
+const expectedIds = Array.from({ length: LEVELS.length }, (_, index) => index + 1);
+if (JSON.stringify(ids) !== JSON.stringify(expectedIds)) {
+  throw new Error('identifiants de niveaux non contigus ou mal ordonnés');
+}
+for (const level of LEVELS) {
+  if (!level.topic || !level.title || !level.statement || !level.theory) throw new Error(`niveau incomplet : ${level.id}`);
+  if (!level.theory.includes('### Cours essentiel') || !level.theory.includes('### Fiche de notion') || !level.theory.includes('### Auto-vérification')) {
+    throw new Error(`cours théorique incomplet : niveau ${level.id}`);
+  }
+  if (level.hints.length < 2 || level.visibleTests.length + level.hiddenTests.length === 0) {
+    throw new Error(`niveau sans accompagnement ou tests : ${level.id}`);
+  }
+}
 const data = LEVELS.map((l) => ({
   id: l.id, phase: l.phase, title: l.title, numpy: NUMPY_LEVELS.has(l.id),
   starter: l.starterCode, solution: l.solution, tips: l.tips,

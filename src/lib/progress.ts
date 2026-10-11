@@ -145,7 +145,7 @@ export function analyseCode(code: string, tips: { pattern: string; advice: strin
   for (const t of tips) {
     try {
       const found = new RegExp(t.pattern, 'm').test(code);
-      if ((t.mode === 'avoid' && found) || (t.mode === 'prefer' && found)) out.push(t.advice);
+      if ((t.mode === 'avoid' && found) || (t.mode === 'prefer' && !found)) out.push(t.advice);
     } catch { /* motif invalide : ignoré */ }
   }
   if (/while True/.test(code) && !/break/.test(code))

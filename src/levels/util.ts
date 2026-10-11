@@ -87,6 +87,37 @@ function guideFor(key: string, phase: number, topic: string): TheoryGuide {
   };
 }
 
+function courseCardFor(key: string): { chapter: string; content: string } {
+  const cards: Record<string, { chapter: string; content: string }> = {
+    variables: { chapter: 'Chapitre 2 — Variables', content: '**Syntaxe minimale :** `nom = valeur`. Une affectation ne compare pas : elle donne un nouveau nom à une valeur.\n\n**Exemple :** `x = 3`, puis `y = x + 2` donne `y == 5`.' },
+    operateurs: { chapter: 'Chapitre 2 — Opérations', content: '**À connaître :** `/` produit un flottant, `//` le quotient entier, `%` le reste et `**` une puissance.\n\n**Contrôle :** pour `a = b * (a // b) + a % b`, le quotient et le reste doivent vérifier la division euclidienne.' },
+    conversions: { chapter: 'Chapitre 2 — Types et conversions', content: '**Conversions :** `int`, `float` et `str` construisent une valeur d’un autre type. `int(3.9)` tronque ; il n’arrondit pas.\n\n**Réflexe :** avant une opération, identifiez le type de chaque opérande.' },
+    fstrings: { chapter: 'Chapitre 3 — Affichage', content: '**Affichage exact :** `print()` ajoute un espace entre ses arguments et un retour à la ligne. Une f-string s’écrit `f"x = {x}"`.\n\n**Pour valider :** comparez aussi la ponctuation, les espaces, les accents et l’ordre des lignes.' },
+    'listes-index': { chapter: 'Chapitre 4 — Listes', content: '**Indices :** une liste de longueur `n` possède les indices `0` à `n - 1`. La tranche `L[a:b]` inclut `a` et exclut `b`.\n\n**Exemple :** `L[-1]` est le dernier élément et `L[1:]` enlève le premier.' },
+    'listes-methodes': { chapter: 'Chapitre 4 — Opérations sur les listes', content: '**Mutation :** `append`, `extend`, `insert`, `remove` et `sort` modifient la liste. `sorted(L)` crée une nouvelle liste.\n\n**Piège :** la plupart des méthodes de modification renvoient `None`.' },
+    'boucles-for': { chapter: 'Chapitre 5 — Boucle `for`', content: '**Parcours :** `for x in L` traite chaque élément ; `for i in range(n)` traite les indices ou les valeurs de `0` à `n - 1`.\n\n**Méthode :** dites ce que représente la variable de boucle avant d’écrire le corps.' },
+    conditions: { chapter: 'Chapitre 5 — Comparaisons et tests', content: '**Branchement :** `if` teste le premier cas, `elif` les cas suivants et `else` le cas restant.\n\n**Attention :** `=` affecte, `==` compare ; les blocs sont délimités par l’indentation.' },
+    'boucles-while': { chapter: 'Chapitre 5 — Boucle `while`', content: '**Structure :** initialisation, condition, corps, mise à jour.\n\n**Preuve de terminaison :** identifiez la quantité qui se rapproche de la condition d’arrêt. Sans mise à jour, le programme peut boucler indéfiniment.' },
+    'dicts-tuples': { chapter: 'Chapitre 8 — Dictionnaires et tuples', content: '**Dictionnaire :** `d[cle]` lit une valeur si la clé existe ; `d.get(cle, defaut)` traite l’absence. Un tuple se construit avec `(...)` et ne se modifie pas.\n\n**Parcours :** `for cle, valeur in d.items()`.' },
+    fonctions: { chapter: 'Chapitre 10 — Fonctions', content: '**Contrat :** une fonction reçoit des paramètres et renvoie un résultat avec `return`. `print` affiche mais ne remplace pas `return`.\n\n**Méthode :** spécifiez les entrées, la sortie, puis testez un cas normal et un cas limite.' },
+    chaines: { chapter: 'Chapitre 11 — Chaînes de caractères', content: '**Séquence immuable :** une chaîne se parcourt comme une liste de caractères. Utilisez `split`, `join`, `strip`, `replace`, `count` et `in` selon le besoin.\n\n**Piège :** une méthode renvoie une nouvelle chaîne ; elle ne modifie pas la chaîne d’origine.' },
+    accumulateurs: { chapter: 'Algorithmique — Accumulateurs', content: '**Invariant :** après `k` tours, l’accumulateur doit résumer exactement les `k` premiers éléments. Initialisez une somme à `0`, un produit à `1` et une construction à `[]`.\n\n**Test :** essayez aussi une liste à un élément et une liste vide si elle est autorisée.' },
+    'max-position': { chapter: 'Algorithmique — Recherche', content: '**Recherche d’un extremum :** conservez simultanément la meilleure valeur et sa position. Initialisez avec le premier élément plutôt qu’avec `0`.\n\n**Égalités :** choisissez explicitement si vous gardez la première ou la dernière position.' },
+    tris: { chapter: 'Algorithmique — Tris', content: '**Invariant de tri :** une partie du tableau est déjà ordonnée après chaque tour externe.\n\n**Analyse :** deux boucles imbriquées conduisent souvent à une complexité en `O(n²)`.' },
+    dichotomie: { chapter: 'Algorithmique — Dichotomie', content: '**Condition préalable :** la liste doit être triée. On maintient un intervalle `[g, d]` contenant la cible et on le réduit à chaque étape.\n\n**Arrêt :** l’intervalle devient vide ou la valeur est trouvée.' },
+    recursivite: { chapter: 'Algorithmique — Récursivité', content: '**Deux éléments obligatoires :** un cas de base et un appel sur une instance strictement plus petite.\n\n**Vérification :** la taille du problème doit décroître et le résultat du sous-problème doit être utilisé.' },
+    comprehensions: { chapter: 'Listes en compréhension', content: '**Traduction :** commencez par écrire la boucle classique, puis utilisez `[expression for element in sequence if condition]`.\n\n**Lisibilité :** une compréhension trop longue doit rester une boucle explicite.' },
+    'numpy-bases': { chapter: 'Calcul scientifique — NumPy', content: '**Array :** `np.array` porte une forme (`shape`) et permet les opérations élément par élément. Préférez la vectorisation aux boucles Python.\n\n**Sortie :** convertissez en liste avec `.tolist()` seulement si le test l’exige.' },
+    'numpy-masques': { chapter: 'Calcul scientifique — Masques', content: '**Masque :** `(a > 0) & (a < 1)` construit un tableau booléen. Avec NumPy, utilisez `&` et `|`, jamais `and` et `or` pour comparer des arrays.\n\n**Parenthèses :** entourez chaque comparaison.' },
+    suites: { chapter: 'Calcul scientifique — Suites', content: '**Récurrence :** stockez le terme courant `u`, puis appliquez la relation exactement `n` fois.\n\n**Contrôle :** distinguez le terme initial `u₀` du nombre de mises à jour.' },
+    integration: { chapter: 'Calcul scientifique — Intégration numérique', content: '**Rectangle :** découpez `[a,b]` en `n` intervalles de largeur `h = (b-a)/n`, puis additionnez les valeurs pondérées par `h`.\n\n**Validation :** testez une fonction constante dont l’intégrale est connue.' },
+    zeros: { chapter: 'Calcul scientifique — Recherche de zéro', content: '**Dichotomie :** elle nécessite un changement de signe aux bornes. À chaque étape, gardez le sous-intervalle où le signe change.\n\n**Tolérance :** arrêtez lorsque la largeur de l’intervalle est assez petite.' },
+    euler: { chapter: 'Calcul scientifique — Méthode d’Euler', content: '**Schéma :** `y_suivant = y + h * f(t, y)`, puis `t = t + h`. L’ordre des mises à jour compte.\n\n**Convergence :** diminuer `h` permet de comparer la précision.' },
+    'synthese-bases': { chapter: 'Méthode CPGE — Synthèse', content: '**Avant de coder :** reformulez les entrées, la sortie et les cas limites. Découpez ensuite en sous-problèmes : parcours, test, construction ou recherche.\n\n**Après le code :** vérifiez un cas simple à la main, puis un cas limite.' },
+  };
+  return cards[key] ?? { chapter: 'Méthode Python', content: '**Démarche :** identifier les données, la sortie attendue et les cas limites avant de choisir les instructions.' };
+}
+
 export function enrichTheory(theory: string, phase: number, topic: string, key = ''): string {
   const phaseAdvice: Record<number, string> = {
     1: 'Commencez par traduire chaque verbe de l’énoncé en une instruction Python, puis vérifiez les types des valeurs manipulées.',
@@ -97,6 +128,7 @@ export function enrichTheory(theory: string, phase: number, topic: string, key =
   };
   const advice = phaseAdvice[phase] ?? 'Décomposez le problème, testez un exemple simple et vérifiez les cas limites.';
   const guide = guideFor(key, phase, topic);
+  const card = courseCardFor(key);
   const algorithmicExtension = phase === 2 || phase === 4 ? `
 
 ### Réflexe algorithmique
@@ -106,6 +138,11 @@ export function enrichTheory(theory: string, phase: number, topic: string, key =
 4. **Complexité :** comptez les parcours ; une boucle imbriquée est souvent en \`O(n²)\`, un parcours simple en \`O(n)\`.
 5. **Validation :** testez une taille minimale, un cas régulier et un cas limite.` : '';
   return `${theory}${algorithmicExtension}
+
+### Cours essentiel
+**Repère :** ${card.chapter}
+
+${card.content}
 
 ### Fiche de notion
 **Prérequis :** ${guide.prerequisites}

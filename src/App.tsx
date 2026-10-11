@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Home } from '@/pages/Home';
 import { LevelPage } from '@/pages/Level';
 import { getLevel } from '@/levels';
-import { isUnlocked, loadProgress, saveProgress, type Progress } from '@/lib/progress';
+import { isUnlocked, loadProgressReport, markLevelSolved, saveProgress, type Progress } from '@/lib/progress';
 import { warmup } from '@/lib/pyodide';
 
 // Navigation par l'ancre de l'URL (#/niveau/12) : le bouton « retour » du
@@ -16,8 +16,14 @@ function levelFromHash(done: number[]): number | null {
 }
 
 export default function App() {
-  const [progress, setProgress] = useState<Progress>(() => loadProgress());
-  const [currentId, setCurrentId] = useState<number | null>(() => levelFromHash(loadProgress().done));
+  const [initialReport] = useState(() => loadProgressReport());
+  const [progress, setProgress] = useState<Progress>(initialReport.progress);
+  const [syncMessage, setSyncMessage] = useState<string | null>(() => {
+    if (initialReport.migratedLegacy) return 'Votre ancienne progression a été resynchronisée : les niveaux modifiés doivent être validés à nouveau. Vos codes et indices sont conservés.';
+    if (initialReport.invalidatedIds.length > 0) return `${initialReport.invalidatedIds.length} niveau${initialReport.invalidatedIds.length > 1 ? 'x' : ''} modifié${initialReport.invalidatedIds.length > 1 ? 's' : ''} doit${initialReport.invalidatedIds.length > 1 ? 'vent' : ''} être validé${initialReport.invalidatedIds.length > 1 ? 's' : ''} à nouveau. Vos codes sont conservés.`;
+    return null;
+  });
+  const [currentId, setCurrentId] = useState<number | null>(() => levelFromHash(initialReport.progress.done));
   const doneRef = useRef<number[]>(progress.done);
 
   // Sauvegarde à chaque changement
@@ -50,9 +56,7 @@ export default function App() {
           progress={progress}
           onBack={goHome}
           onOpen={openLevel}
-          onSolved={(id) =>
-            setProgress((p) => (p.done.includes(id) ? p : { ...p, done: [...p.done, id] }))
-          }
+          onSolved={(id) => setProgress((p) => markLevelSolved(p, id))}
           onSaveCode={(id, code) => setProgress((p) => ({ ...p, codes: { ...p.codes, [id]: code } }))}
           onUseHint={(id, n) => setProgress((p) => ({ ...p, hintsUsed: { ...p.hintsUsed, [id]: n } }))}
         />
@@ -60,8 +64,9 @@ export default function App() {
         <Home
           progress={progress}
           onOpen={openLevel}
-          onReset={() => setProgress({ done: [], codes: {}, hintsUsed: {} })}
+          onReset={() => { setProgress({ done: [], codes: {}, hintsUsed: {}, signatures: {} }); setSyncMessage(null); }}
           onImport={(p) => setProgress(p)}
+          syncMessage={syncMessage}
         />
       )}
     </div>

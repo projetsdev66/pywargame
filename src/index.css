@@ -184,6 +184,25 @@ summary:focus-visible {
   padding-bottom: 54px;
 }
 
+.sync-notice {
+  display: grid;
+  gap: 4px;
+  margin: -18px 0 26px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--gold);
+  background: #f6f2e8;
+  color: var(--ink-soft);
+  font-size: 12px;
+  animation: reveal-up .24s ease both;
+}
+
+.sync-notice strong {
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
 .home-intro {
   max-width: 780px;
   padding-bottom: 34px;

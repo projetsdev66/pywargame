@@ -13,11 +13,13 @@ export function Home({
   onOpen,
   onReset,
   onImport,
+  syncMessage,
 }: {
   progress: Progress;
   onOpen: (id: number) => void;
   onReset: () => void;
   onImport: (progress: Progress) => void;
+  syncMessage?: string | null;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -45,6 +47,7 @@ export function Home({
       </header>
 
       <main className="home-main">
+        {syncMessage && <aside className="sync-notice" role="status"><strong>Progression synchronisée</strong><span>{syncMessage}</span></aside>}
         <section className="home-intro" aria-labelledby="home-title">
           <p className="eyebrow"><span className="eyebrow-rule" /> Du premier calcul aux problèmes de MPSI</p>
           <h1 id="home-title">Lire. Essayer.<br /><em>Comprendre.</em></h1>

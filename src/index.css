@@ -1862,3 +1862,21 @@ button:disabled {
 .lesson-title { font-size: 13px; }
 .step-strip { padding-bottom: 11px; }
 @media (max-width: 640px) { .curriculum-section > .section-heading { padding-inline: 8px; }.curriculum-list { border-inline: 0; }.module-lessons { padding-left: 18px; } }
+
+/* Niveaux affichés comme les leçons du curriculum freeCodeCamp */
+.curriculum-topic { border-top: 1px solid #eceeec; }
+.topic-row { width: 100%; min-height: 45px; display: flex; align-items: center; gap: 9px; padding: 9px 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
+.topic-row:hover, .level-row:hover:not(:disabled) { background: #f0f2f0; }
+.level-list { padding: 0 0 8px 24px; border-top: 1px solid #f0f1f0; }
+.level-row { width: 100%; min-height: 43px; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-bottom: 1px solid #f0f1f0; background: transparent; text-align: left; cursor: pointer; }
+.level-row:last-child { border-bottom: 0; }
+.level-row:disabled { cursor: not-allowed; opacity: .48; }
+.level-row[data-state="current"] { background: #eef7f1; box-shadow: inset 3px 0 #237a57; }
+.level-row[data-state="done"] .level-row-title { color: #237a57; }
+.level-radio { width: 22px; height: 22px; display: grid; place-items: center; flex: 0 0 auto; color: #7f8a84; }
+.level-row[data-state="done"] .level-radio { color: #237a57; }
+.level-row-copy { min-width: 0; flex: 1; display: grid; gap: 1px; }
+.level-row-title { overflow: hidden; color: #35414a; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.level-row-meta { color: #89928d; font-size: 10px; }
+.level-row .lesson-kind { margin-left: 8px; }
+@media (max-width: 640px) { .level-list { padding-left: 9px; }.level-row { padding-inline: 6px; }.level-row .lesson-kind { display: none; }.level-row-title { white-space: normal; } }
